@@ -1,6 +1,6 @@
 # Emacs Installer Script
 
-This is a bash script to automate the installation and configuration of Emacs.
+This is a bash script to automate the installation and configuration of Emacs on Ubuntu 22.
 
 You can run the script with different flags to modify its behavior. The available options are:
 
