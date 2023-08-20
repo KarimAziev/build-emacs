@@ -30,6 +30,18 @@ To use the script to build and install Emacs in a custom directory without insta
 ./install_emacs.sh -p $HOME/myemacs -n install_deps,pull_emacs
 ```
 
+Prompt every step:
+
+```shell
+bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh)"
+```
+
+Execute all steps without prompt.
+
+```shell
+bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -y"
+```
+
 ## Requirements
 
 This script requires that you have bash, git, and sudo privilege. It's designed to work on Unix-like operating systems.
