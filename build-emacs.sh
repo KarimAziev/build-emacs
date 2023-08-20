@@ -109,7 +109,7 @@ copy_emacs_icon() {
 
 fix_emacs_xwidgets() {
   local filename="/usr/local/share/applications/emacs.desktop"
-  sudo sed -i 's|Exec=emacs %F|Exec=env SNAP=emacs SNAP_NAME=emacs SNAP_REVISION=1 emacs|' $filename
+  sudo sed -i 's|Exec=emacs %F|Exec=env SNAP=emacs SNAP_NAME=emacs SNAP_REVISION=1 emacs %F|' $filename
 }
 
 install_deps() {
