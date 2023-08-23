@@ -39,7 +39,7 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/ma
 ### Execute only `copy_emacs_icon` step.
 
 ```shell
-bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -n install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets"
+bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -n install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets -y"
 ```
 
 ### Use custom directory
