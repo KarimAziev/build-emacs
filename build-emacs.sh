@@ -109,8 +109,12 @@ copy_emacs_icon() {
   fi
 }
 
+# Fixing Emacs crashes with SIGTRAP when trying to start a WebKit xwidget.
+# https://git.savannah.gnu.org/cgit/emacs.git/tree/etc/PROBLEMS?h=master#n181
 fix_emacs_xwidgets() {
   local filename="/usr/local/share/applications/emacs.desktop"
+  # setting the environment variables SNAP, SNAP_NAME and SNAP_REVISION will
+  # make WebKit use GLib to launch subprocesses instead
   sudo sed -i 's|Exec=emacs %F|Exec=env SNAP=emacs SNAP_NAME=emacs SNAP_REVISION=1 emacs %F|' $filename
 }
 
