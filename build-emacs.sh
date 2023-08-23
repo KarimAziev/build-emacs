@@ -3,7 +3,6 @@
 set -e
 set -o pipefail
 
-DOTFILES_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKIP_PROMPT="false"
 EMACS_DIRECTORY="$HOME/emacs"
 
@@ -96,14 +95,17 @@ main() {
 }
 
 copy_emacs_icon() {
-  local filename="/usr/local/share/applications/emacs.desktop"
-  local replace="Icon=$DOTFILES_ROOT/icons/emacs.png"
-  local search
-  if [ -f "$DOTFILES_ROOT/icons/emacs.png" ]; then
-    search=$(grep Icon=emacs "$filename")
-    if grep Icon=emacs "$filename"; then
-      sudo sed -i "s|$search|$replace|" "$filename"
-    fi
+  local emacs_desktop_filename="/usr/local/share/applications/emacs.desktop"
+  local download_dir="$HOME/.local/share/icons/hicolor/256x256/apps"
+  local icon_url="https://raw.githubusercontent.com/KarimAziev/build-emacs/main/icons/emacs.png"
+
+  if [ -f "$emacs_desktop_filename" ]; then
+    echo "Loading emacs icon"
+    mkdir -p "$download_dir"
+    echo "Loading emacs icon"
+
+    wget -O "$download_dir/emacs.png" "$icon_url" \
+      && sudo sed -i "s|^\(Icon=\).*|\1$download_dir/emacs.png|" "$emacs_desktop_filename"
   fi
 }
 
