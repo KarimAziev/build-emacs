@@ -97,15 +97,18 @@ main() {
 copy_emacs_icon() {
   local emacs_desktop_filename="/usr/local/share/applications/emacs.desktop"
   local download_dir="$HOME/.local/share/icons/hicolor/256x256/apps"
-  local icon_url="https://raw.githubusercontent.com/KarimAziev/build-emacs/main/icons/emacs.png"
+
+  # Spacemacs logo by Nasser Alshammari is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+  local icon_url="https://raw.githubusercontent.com/nashamri/spacemacs-logo/master/spacemacs-logo.svg"
 
   if [ -f "$emacs_desktop_filename" ]; then
     echo "Loading emacs icon"
     mkdir -p "$download_dir"
+
     echo "Loading emacs icon"
 
-    wget -O "$download_dir/emacs.png" "$icon_url" \
-      && sudo sed -i "s|^\(Icon=\).*|\1$download_dir/emacs.png|" "$emacs_desktop_filename"
+    wget -O "$download_dir/emacs.svg" "$icon_url" \
+      && sudo sed -i "s|^\(Icon=\).*|\1$download_dir/emacs.svg|" "$emacs_desktop_filename"
   fi
 }
 
