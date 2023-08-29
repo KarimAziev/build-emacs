@@ -24,10 +24,12 @@ usage() {
   echo "  -h              display this help and exit"
   echo "  -p  DIRECTORY   specify the emacs directory, default is '\$HOME/emacs'"
   echo "  -y              skip all the prompts and directly install emacs and proceed with the steps"
-  echo "  -n  STEPS       specify the steps to skip, steps have to be comma separated [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]"
+  echo "  -s  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       specify the exact steps to execute, steps should be separated by comma"
+  echo "  -n  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       specify the steps to skip (no step), steps have to be comma separated"
   echo
   echo "Example:"
-  echo "  $0 -p \$HOME/myemacs -n install_deps,pull_emacs build and install emacs in \$HOME/myemacs without installing dependencies and pulling emacs source."
+  echo "  $0 -p \$HOME/myemacs -s pull_emacs,build_emacs,install_emacs - perform only pull, build and install steps"
+  echo "  $0 -p \$HOME/myemacs -n install_deps,pull_emacs - no installing dependencies and pulling emacs source to \$HOME/myemacs no."
   exit 0
 }
 
@@ -48,8 +50,15 @@ filter_steps() {
   steps=("${filtered_steps[@]}")
 }
 
+set_steps() {
+  local oldIFS="$IFS"
+  IFS=','
+  read -r -a steps <<< "$1"
+  IFS="$oldIFS"
+}
+
 parse_arguments() {
-  while getopts ":hn:p:y" OPTION; do
+  while getopts ":hn:p:ys:" OPTION; do
     case $OPTION in
       h)
         usage
@@ -63,6 +72,9 @@ parse_arguments() {
         ;;
       n)
         filter_steps "$OPTARG"
+        ;;
+      s)
+        set_steps "$OPTARG"
         ;;
       ?)
         echo "Illegal option: -$OPTARG"
