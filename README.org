@@ -1,143 +1,127 @@
-# About
+#+OPTIONS: ^:nil tags:nil num:nil
 
+* About
 This is a bash script to automate the installation and configuration of
-Emacs on `Ubuntu 22`.
+Emacs on =Ubuntu 22=.
 
 You can run the script without with different flags to modify its
 behavior. The available options are:
 
-1.  `-h`: Display help and exit.
-2.  `-p DIRECTORY` : Specify the Emacs installation directory. By
-    default, it is `$HOME/emacs`.
-3.  `-y`: Skip all the prompts and directly install Emacs and proceed
-    with the steps.
-4.  `-n STEPS`: Specify the steps to skip. Steps need to be
-    comma-separated.
+1. =-h=: Display help and exit.
+2. =-p DIRECTORY= : Specify the Emacs installation directory. By
+   default, it is =$HOME/emacs=.
+3. =-y=: Skip all the prompts and directly install Emacs and proceed
+   with the steps.
+4. =-n STEPS=: Specify the steps to skip. Steps need to be
+   comma-separated.
 
-# Emacs Installer Script for Ubuntu 22
+* Emacs Installer Script for Ubuntu 22                             :TOC_4_gh:QUOTE:
+#+BEGIN_QUOTE
+- [[#about][About]]
+  - [[#requirements][Requirements]]
+  - [[#steps][Steps]]
+  - [[#usage][Usage]]
+    - [[#prompt-every-step-default][Prompt Every Step (Default)]]
+    - [[#execute-all-steps-without-prompt][Execute All Steps Without Prompt]]
+    - [[#execute-specific-steps][Execute Specific Steps]]
+    - [[#skip-certain-steps][Skip Certain Steps]]
+    - [[#use-a-custom-directory][Use a Custom Directory]]
+  - [[#list-of-packages-that-will-be-installed][List of packages that will be installed]]
+  - [[#disclaimer][Disclaimer]]
+#+END_QUOTE
 
->   - [About](#about)
->       - [Requirements](#requirements)
->       - [Steps](#steps)
->       - [Usage](#usage)
->           - [Prompt Every Step (Default)](#prompt-every-step-default)
->           - [Execute All Steps Without
->             Prompt](#execute-all-steps-without-prompt)
->           - [Execute Specific Steps](#execute-specific-steps)
->           - [Skip Certain Steps](#skip-certain-steps)
->           - [Use a Custom Directory](#use-a-custom-directory)
->       - [List of packages that will be
->         installed](#list-of-packages-that-will-be-installed)
->       - [Disclaimer](#disclaimer)
+** Requirements
 
-## Requirements
+This script requires that you have =bash=, =git=, and =sudo= privilege. It's
+designed to work on =Ubuntu 22=.
 
-This script requires that you have `bash`, `git`, and `sudo` privilege.
-It's designed to work on `Ubuntu 22`.
-
-## Steps
+** Steps
 
 Here are the steps that this script will perform in order:
 
-1.  `install_deps`: Install the necessary
-    [dependencies](#list-of-packages-that-will-be-installed) for Emacs.
-2.  `kill_emacs`: Kill any running Emacs process.
-3.  `remove_emacs`: Uninstall Emacs and perform a clean up.
-4.  `pull_emacs`: Pull the latest Emacs source code.
-5.  `build_emacs`: Build Emacs from the source code.
-6.  `install_emacs`: Install Emacs from the built source code.
-7.  `fix_emacs_xwidgets`: Fix
-    [issue](https://git.savannah.gnu.org/cgit/emacs.git/tree/etc/PROBLEMS?h=master#n181)
-    related to Emacs XWidgets.
-8.  `copy_emacs_icon`: Download and replace the default Emacs Icon with
-    the [Spacemacs logo](https://github.com/nashamri/spacemacs-logo) by
-    Nasser Alshammari.
+1. =install_deps=: Install the necessary [[#list-of-packages-that-will-be-installed][dependencies]] for Emacs.
+2. =kill_emacs=: Kill any running Emacs process.
+3. =remove_emacs=: Uninstall Emacs and perform a clean up.
+4. =pull_emacs=: Pull the latest Emacs source code.
+5. =build_emacs=: Build Emacs from the source code.
+6. =install_emacs=: Install Emacs from the built source code.
+7. =fix_emacs_xwidgets=: Fix [[https://git.savannah.gnu.org/cgit/emacs.git/tree/etc/PROBLEMS?h=master#n181][issue]] related to Emacs XWidgets.
+8. =copy_emacs_icon=: Download and replace the default Emacs Icon with the [[https://github.com/nashamri/spacemacs-logo][Spacemacs logo]] by Nasser Alshammari.
 
-## Usage
+** Usage
 
-### Prompt Every Step (Default)
+*** Prompt Every Step (Default)
 
-To execute the build and installation script step-by-step, use the
-following command:
+To execute the build and installation script step-by-step, use the following command:
 
-``` shell
+#+begin_src shell
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh)"
-```
+#+end_src
 
 If you have already downloaded the script, simply execute:
-
-``` shell
+#+begin_src shell
 ./build-emacs.sh
-```
+#+end_src
 
-### Execute All Steps Without Prompt
+*** Execute All Steps Without Prompt
 
-To execute all steps without prompting, use the `-y` argument (which
-assumes "yes") to each question.
+To execute all steps without prompting, use the =-y= argument (which assumes "yes") to each question.
 
-``` shell
+#+begin_src shell
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -y"
-```
+#+end_src
 
 Or, if you have the script downloaded:
-
-``` shell
+#+begin_src shell
 ./build-emacs.sh -y
-```
+#+end_src
 
-### Execute Specific Steps
+*** Execute Specific Steps
+To execute specific steps, use the =-s= argument with the desired steps, separated by commas. For instance,
+to only compile (=build_emacs=) and install (=install_emacs=) Emacs skipping other steps:
 
-To execute specific steps, use the `-s` argument with the desired steps,
-separated by commas. For instance, to only compile (`build_emacs`) and
-install (`install_emacs`) Emacs skipping other steps:
-
-``` shell
+#+begin_src shell
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -s build_emacs,install_emacs"
-```
+#+end_src
 
 Or, if you have the script downloaded:
-
-``` shell
+#+begin_src shell
 ./build-emacs.sh -s build_emacs,install_emacs
-```
+#+end_src
 
-### Skip Certain Steps
 
-You can also skip certain steps using the `-n` argument, followed by the
-steps you wish to omit.
+*** Skip Certain Steps
+You can also skip certain steps using the =-n= argument, followed by the steps you wish to omit.
 
-The example below will execute all steps except installing dependencies
-(`install_deps`).
+The example below will execute all steps except installing dependencies (=install_deps=).
 
-``` shell
+#+begin_src shell
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -n install_deps"
-```
+#+end_src
 
 Or, if you have the script downloaded:
-
-``` shell
+#+begin_src shell
 ./build-emacs.sh -n install_deps
-```
+#+end_src
 
-### Use a Custom Directory
+*** Use a Custom Directory
 
-To build in a custom directory, use the `-p` argument, followed by the
-path to your directory:
+To build in a custom directory, use the =-p= argument, followed by the path to your directory:
 
-``` shell
+#+begin_src shell
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -p $HOME/myemacs"
-```
+#+end_src
 
 Or, if you have the script downloaded:
-
-``` shell
+#+begin_src shell
 ./build-emacs.sh -p $HOME/myemacs
-```
+#+end_src
 
-## List of packages that will be installed
+
+** List of packages that will be installed
 
 | Package                        | Description                                                                    |
-| ------------------------------ | ------------------------------------------------------------------------------ |
+|--------------------------------+--------------------------------------------------------------------------------|
 | autoconf                       | automatic configure script builder                                             |
 | automake                       | Tool for generating GNU Standards-compliant Makefiles                          |
 | bsd-mailx                      | simple mail user agent                                                         |
@@ -154,10 +138,10 @@ Or, if you have the script downloaded:
 | gvfs                           | userspace virtual filesystem - GIO module                                      |
 | heif-gdk-pixbuf                | ISO/IEC 23008-12:2017 HEIF file format decoder - gdk-pixbuf loader             |
 | ibus-gtk3                      | Intelligent Input Bus - GTK3 support                                           |
-| imagemagick                    | image manipulation programs – binaries                                         |
+| imagemagick                    | image manipulation programs -- binaries                                        |
 | libacl1-dev                    | access control list - static libraries and headers                             |
 | libasound2                     | shared library for ALSA applications                                           |
-| libasound2-dev                 | shared library for ALSA applications – development files                       |
+| libasound2-dev                 | shared library for ALSA applications -- development files                      |
 | libaspell15                    | GNU Aspell spell-checker runtime library                                       |
 | libasyncns0                    | Asynchronous name service query library                                        |
 | libatk1.0-0                    | ATK accessibility toolkit                                                      |
@@ -175,15 +159,15 @@ Or, if you have the script downloaded:
 | libstdc++6                     | a shared library that is part of the GNU Standard C++ Library                  |
 | libconfig-dev                  | parsing/manipulation of structured config files (development)                  |
 | libdatrie1                     | Double-array trie library                                                      |
-| libdb5.3                       | Berkeley v5.3 Database Libraries \[runtime\]                                   |
+| libdb5.3                       | Berkeley v5.3 Database Libraries [runtime]                                     |
 | libdbus-1-dev                  | simple interprocess messaging system (development headers)                     |
-| libdrm2                        | Userspace interface to kernel DRM services – runtime                           |
-| libegl1                        | Vendor neutral GL dispatch library – EGL support                               |
+| libdrm2                        | Userspace interface to kernel DRM services -- runtime                          |
+| libegl1                        | Vendor neutral GL dispatch library -- EGL support                              |
 | libepoxy0                      | OpenGL function pointer management library                                     |
 | libflac8                       | Free Lossless Audio Codec - runtime C library                                  |
 | libfontconfig1                 | generic font configuration library - runtime                                   |
 | libfreetype6                   | FreeType 2 font engine, shared library files                                   |
-| libgbm1                        | generic buffer management API – runtime                                        |
+| libgbm1                        | generic buffer management API -- runtime                                       |
 | libgccjit0                     | GCC just-in-time compilation (shared library)                                  |
 | libgccjit-10-dev               | GCC just-in-time compilation (development files)                               |
 | libgccjit-11-dev               | GCC just-in-time compilation (development files)                               |
@@ -192,13 +176,13 @@ Or, if you have the script downloaded:
 | libgdk-pixbuf2.0-0             | GDK Pixbuf library (transitional package)                                      |
 | libgif7                        | library for GIF images (library)                                               |
 | libgif-dev                     | library for GIF images (development)                                           |
-| libgl1                         | Vendor neutral GL dispatch library – legacy GL support                         |
+| libgl1                         | Vendor neutral GL dispatch library -- legacy GL support                        |
 | libglvnd0                      | Vendor neutral GL dispatch library                                             |
-| libglx0                        | Vendor neutral GL dispatch library – GLX support                               |
+| libglx0                        | Vendor neutral GL dispatch library -- GLX support                              |
 | libgnutls28-dev                | GNU TLS library - development files                                            |
 | libgpm2                        | General Purpose Mouse - shared library                                         |
 | libgpm-dev                     | General Purpose Mouse - development files                                      |
-| libgraphite2-3                 | Font rendering engine for Complex Scripts – library                            |
+| libgraphite2-3                 | Font rendering engine for Complex Scripts -- library                           |
 | libgstreamer1.0-0              | Core GStreamer libraries and elements                                          |
 | libgstreamer-gl1.0-0           | GStreamer GL libraries                                                         |
 | libgstreamer-plugins-base1.0-0 | GStreamer libraries from the "base" set                                        |
@@ -223,7 +207,7 @@ Or, if you have the script downloaded:
 | libltdl7                       | System independent dlopen wrapper for GNU libtool                              |
 | libm17n-0                      | multilingual text processing library - runtime                                 |
 | libm17n-dev                    | multilingual text processing library - development                             |
-| libmagickwand-dev              | image manipulation library – dummy package                                     |
+| libmagickwand-dev              | image manipulation library -- dummy package                                    |
 | libmpc3                        | multiple precision complex floating-point library                              |
 | libmpfr6                       | multiple precision floating-point computation                                  |
 | libncurses5-dev                | transitional package for libncurses-dev                                        |
@@ -250,7 +234,7 @@ Or, if you have the script downloaded:
 | libselinux1-dev                | SELinux development headers                                                    |
 | libsm6                         | X11 Session Management library                                                 |
 | libsndfile1                    | Library for reading/writing audio files                                        |
-| libsoup2.4-1                   | HTTP library implementation in C – Shared library                              |
+| libsoup2.4-1                   | HTTP library implementation in C -- Shared library                             |
 | libsystemd-dev                 | systemd utility library - development files                                    |
 | libtdb1                        | Trivial Database - shared library                                              |
 | libthai0                       | Thai language support library                                                  |
@@ -303,8 +287,10 @@ Or, if you have the script downloaded:
 | xaw3dg-dev                     | Xaw3d widget set development package                                           |
 | zlib1g-dev                     | compression library - development                                              |
 
-## Disclaimer
+** Disclaimer
 
 Please review the script before running it. I take no responsibility for
 any adverse effects it may have on your system. Always ensure you have a
 backup of your important data.
+
+
