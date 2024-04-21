@@ -1,34 +1,31 @@
 # About
 
-This is a bash script to automate the installation and configuration of
-Emacs on `Ubuntu 22`.
+This is a bash script to automate the installation of Emacs on Ubuntu 22 with Wayland.
 
-You can run the script without with different flags to modify its
-behavior. The available options are:
+You can run the script with different flags to modify its behavior. The available options are:
 
-1.  `-h`: Display help and exit.
-2.  `-p DIRECTORY` : Specify the Emacs installation directory. By
-    default, it is `$HOME/emacs`.
-3.  `-y`: Skip all the prompts and directly install Emacs and proceed
-    with the steps.
-4.  `-n STEPS`: Specify the steps to skip. Steps need to be
-    comma-separated.
+- `-h`: Display the help message and exit.
+- `-p DIRECTORY`: Specify the Emacs installation directory. The default is `$HOME/emacs`.
+- `-u URL`: Specify the remote URL of the Emacs Git repository. The default is <https://git.savannah.gnu.org/git/emacs.git>.
+- `-y`: Skip all prompts and directly proceed with the installation and configuration steps.
+- `-s [OPTIONS]`: Specify the exact steps to execute. Available steps are: `install_deps`, `kill_emacs`, `remove_emacs`, `pull_emacs`, `build_emacs`, `install_emacs`, `fix_emacs_xwidgets`, `copy_emacs_icon`. Steps should be separated by commas. By default, all steps are enabled.
+- `-n [OPTIONS]`: Specifies the steps to skip. Available steps are the same as listed for the `-s` option.
 
 # Emacs Installer Script for Ubuntu 22
 
->   - [About](#about)
->       - [Requirements](#requirements)
->       - [Steps](#steps)
->       - [Usage](#usage)
->           - [Prompt Every Step (Default)](#prompt-every-step-default)
->           - [Execute All Steps Without
->             Prompt](#execute-all-steps-without-prompt)
->           - [Execute Specific Steps](#execute-specific-steps)
->           - [Skip Certain Steps](#skip-certain-steps)
->           - [Use a Custom Directory](#use-a-custom-directory)
->       - [List of packages that will be
->         installed](#list-of-packages-that-will-be-installed)
->       - [Disclaimer](#disclaimer)
+> - [About](#about)
+>   - [Requirements](#requirements)
+>   - [Steps](#steps)
+>   - [Usage](#usage)
+>     - [Prompt Every Step (Default)](#prompt-every-step-default)
+>     - [Execute All Steps Without
+>       Prompt](#execute-all-steps-without-prompt)
+>     - [Execute Specific Steps](#execute-specific-steps)
+>     - [Skip Certain Steps](#skip-certain-steps)
+>     - [Use a Custom Directory](#use-a-custom-directory)
+>   - [List of packages that will be
+>     installed](#list-of-packages-that-will-be-installed)
+>   - [Disclaimer](#disclaimer)
 
 ## Requirements
 
@@ -60,13 +57,13 @@ Here are the steps that this script will perform in order:
 To execute the build and installation script step-by-step, use the
 following command:
 
-``` shell
+```shell
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh)"
 ```
 
 If you have already downloaded the script, simply execute:
 
-``` shell
+```shell
 ./build-emacs.sh
 ```
 
@@ -75,13 +72,13 @@ If you have already downloaded the script, simply execute:
 To execute all steps without prompting, use the `-y` argument (which
 assumes "yes") to each question.
 
-``` shell
+```shell
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -y"
 ```
 
 Or, if you have the script downloaded:
 
-``` shell
+```shell
 ./build-emacs.sh -y
 ```
 
@@ -91,13 +88,13 @@ To execute specific steps, use the `-s` argument with the desired steps,
 separated by commas. For instance, to only compile (`build_emacs`) and
 install (`install_emacs`) Emacs skipping other steps:
 
-``` shell
+```shell
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -s build_emacs,install_emacs"
 ```
 
 Or, if you have the script downloaded:
 
-``` shell
+```shell
 ./build-emacs.sh -s build_emacs,install_emacs
 ```
 
@@ -109,13 +106,13 @@ steps you wish to omit.
 The example below will execute all steps except installing dependencies
 (`install_deps`).
 
-``` shell
+```shell
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -n install_deps"
 ```
 
 Or, if you have the script downloaded:
 
-``` shell
+```shell
 ./build-emacs.sh -n install_deps
 ```
 
@@ -124,13 +121,13 @@ Or, if you have the script downloaded:
 To build in a custom directory, use the `-p` argument, followed by the
 path to your directory:
 
-``` shell
+```shell
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -p $HOME/myemacs"
 ```
 
 Or, if you have the script downloaded:
 
-``` shell
+```shell
 ./build-emacs.sh -p $HOME/myemacs
 ```
 
@@ -211,8 +208,6 @@ Or, if you have the script downloaded:
 | libhyphen0                     | ALTLinux hyphenation library - shared library                                  |
 | libibus-1.0-5                  | Intelligent Input Bus - shared library                                         |
 | libice6                        | X11 Inter-Client Exchange library                                              |
-| libjansson4                    | C library for encoding, decoding and manipulating JSON data                    |
-| libjansson-dev                 | C library for encoding, decoding and manipulating JSON data (dev)              |
 | libjbig0                       | JBIGkit libraries                                                              |
 | libjpeg-dev                    | Independent JPEG Group's JPEG runtime library (dependency package)             |
 | libjpeg-turbo8                 | IJG JPEG compliant runtime library.                                            |
