@@ -159,7 +159,7 @@ install_deps() {
     libwayland-client0 libwayland-cursor0 libwayland-egl1 libwayland-server0
     libwebpdemux2 libwoff1 libx11-6 libx11-xcb1 libxau6 libxcb-render0 libxcb-shm0
     libxcb1 heif-gdk-pixbuf libxcomposite1 libxcursor1 libxdamage1
-    libwebkit2gtk-4.1-dev gawk ibus-gtk3 libibus-1.0-5 libxdmcp6 libxext6
+    gawk ibus-gtk3 libibus-1.0-5 libxdmcp6 libxext6
     libxfixes3 libxi6 libxinerama1 libxkbcommon0 libxml2 libxpm4
     libxrandr2 libxrender1 libxslt1.1 libyajl2 clang libclang-dev)
 
