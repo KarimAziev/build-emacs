@@ -5,6 +5,7 @@ set -o pipefail
 
 SKIP_PROMPT="false"
 EMACS_DIRECTORY="$HOME/emacs"
+EMACS_REMOTE_URL="https://git.savannah.gnu.org/git/emacs.git"
 
 steps=(
   install_deps
@@ -18,18 +19,19 @@ steps=(
 )
 usage() {
   echo "Usage: $0 [OPTION]..."
-  echo "Install and configure emacs with the specified options."
+  echo "Install and configure Emacs using specified options."
   echo
   echo "Options:"
-  echo "  -h              display this help and exit"
-  echo "  -p  DIRECTORY   specify the emacs directory, default is '\$HOME/emacs'"
-  echo "  -y              skip all the prompts and directly install emacs and proceed with the steps"
-  echo "  -s  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       specify the exact steps to execute, steps should be separated by comma"
-  echo "  -n  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       specify the steps to skip (no step), steps have to be comma separated"
+  echo "  -h              Display this help message and exit."
+  echo "  -p  DIRECTORY   Specify the Emacs installation directory. Default is '\$HOME/emacs'."
+  echo "  -u  URL         Specify the remote URL of the Emacs Git repository. Default is https://git.savannah.gnu.org/git/emacs.git."
+  echo "  -y              Skip all prompts and directly proceed with the installation and configuration steps."
+  echo "  -s  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       Specify the exact steps to execute. Steps should be separated by commas."
+  echo "  -n  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       Specify the steps to skip. No steps will be executed by default. Steps should be separated by commas."
   echo
-  echo "Example:"
-  echo "  $0 -p \$HOME/myemacs -s pull_emacs,build_emacs,install_emacs - perform only pull, build and install steps"
-  echo "  $0 -p \$HOME/myemacs -n install_deps,pull_emacs - no installing dependencies and pulling emacs source to \$HOME/myemacs no."
+  echo "Examples:"
+  echo "  $0 -p \$HOME/myemacs -s pull_emacs,build_emacs,install_emacs - Perform only the pull, build, and install steps."
+  echo "  $0 -p \$HOME/myemacs -n install_deps,pull_emacs - Skip installing dependencies and pulling the Emacs source, using the directory \$HOME/myemacs."
   exit 0
 }
 
@@ -58,7 +60,7 @@ set_steps() {
 }
 
 parse_arguments() {
-  while getopts ":hn:p:ys:" OPTION; do
+  while getopts ":hn:p:ys:u:" OPTION; do
     case $OPTION in
       h)
         usage
@@ -75,6 +77,9 @@ parse_arguments() {
         ;;
       s)
         set_steps "$OPTARG"
+        ;;
+      u)
+        EMACS_REMOTE_URL="$OPTARG"
         ;;
       ?)
         echo "Illegal option: -$OPTARG"
@@ -178,10 +183,20 @@ kill_emacs() {
 pull_emacs() {
   if [ ! -d "$EMACS_DIRECTORY" ]; then
     echo "Cloning emacs"
-    git clone --depth 1 https://git.savannah.gnu.org/git/emacs.git "$EMACS_DIRECTORY"
+
+    git clone --depth 1 "$EMACS_REMOTE_URL" "$EMACS_DIRECTORY"
     cd "$EMACS_DIRECTORY" || exit 1
+
   else
     cd "$EMACS_DIRECTORY" || exit 1
+
+    current_origin_url=$(git remote get-url origin)
+
+    if [ "$current_origin_url" != "$EMACS_REMOTE_URL" ]; then
+      echo "Updating origin to $EMACS_REMOTE_URL"
+      git remote set-url origin "$EMACS_REMOTE_URL"
+    fi
+
     echo "Pulling emacs"
     git pull origin "$(git rev-parse --abbrev-ref HEAD)"
   fi
