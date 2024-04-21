@@ -26,8 +26,8 @@ usage() {
   echo "  -p  DIRECTORY   Specify the Emacs installation directory. Default is '\$HOME/emacs'."
   echo "  -u  URL         Specify the remote URL of the Emacs Git repository. Default is https://git.savannah.gnu.org/git/emacs.git."
   echo "  -y              Skip all prompts and directly proceed with the installation and configuration steps."
-  echo "  -s  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       Specify the exact steps to execute. Steps should be separated by commas."
-  echo "  -n  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       Specify the steps to skip. No steps will be executed by default. Steps should be separated by commas."
+  echo "  -s  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       Specify the exact steps to execute. Steps should be separated by commas. By default, all steps are enabled."
+  echo "  -n  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       Specify the steps to skip. Steps should be separated by commas."
   echo
   echo "Examples:"
   echo "  $0 -p \$HOME/myemacs -s pull_emacs,build_emacs,install_emacs - Perform only the pull, build, and install steps."
