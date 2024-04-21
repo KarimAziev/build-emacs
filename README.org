@@ -195,8 +195,6 @@ Or, if you have the script downloaded:
 | libhyphen0                     | ALTLinux hyphenation library - shared library                                  |
 | libibus-1.0-5                  | Intelligent Input Bus - shared library                                         |
 | libice6                        | X11 Inter-Client Exchange library                                              |
-| libjansson4                    | C library for encoding, decoding and manipulating JSON data                    |
-| libjansson-dev                 | C library for encoding, decoding and manipulating JSON data (dev)              |
 | libjbig0                       | JBIGkit libraries                                                              |
 | libjpeg-dev                    | Independent JPEG Group's JPEG runtime library (dependency package)             |
 | libjpeg-turbo8                 | IJG JPEG compliant runtime library.                                            |
