@@ -203,15 +203,23 @@ pull_emacs() {
 }
 
 remove_emacs() {
-  cd "$EMACS_DIRECTORY" || exit 1
-  echo "Uninstalling Emacs"
-  sudo make uninstall
-  echo "Cleaning Emacs"
-  sudo make extraclean
+  if [ -d "$EMACS_DIRECTORY" ]; then
+    cd "$EMACS_DIRECTORY" || exit 1
+    echo "Uninstalling Emacs"
+    sudo make uninstall
+    echo "Cleaning Emacs"
+    sudo make extraclean
+  fi
 }
 
 build_emacs() {
-  cd "$EMACS_DIRECTORY" || exit 1
+  if [ ! -d "$EMACS_DIRECTORY" ]; then
+    echo >&2 "build_emacs: Error - Directory '$EMACS_DIRECTORY' doesn't exist."
+    exit 1
+  else
+    cd "$EMACS_DIRECTORY"
+    echo "Building Emacs"
+  fi
 
   ./autogen.sh
   ./configure \
@@ -237,7 +245,13 @@ build_emacs() {
 }
 
 install_emacs() {
-  cd "$EMACS_DIRECTORY" || exit 1
+  if [ ! -d "$EMACS_DIRECTORY" ]; then
+    echo >&2 "install_emacs: Error - Directory '$EMACS_DIRECTORY' doesn't exist."
+    exit 1
+  else
+    cd "$EMACS_DIRECTORY"
+    echo "Installing Emacs"
+  fi
   sudo make install
 }
 
