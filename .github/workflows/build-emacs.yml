@@ -1,0 +1,34 @@
+name: Build Emacs
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Emacs on Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Setup Environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget git
+
+    - name: Download build-emacs.sh
+      run: |
+        wget https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh
+        chmod +x build-emacs.sh
+
+    - name: Install Dependencies
+      run: ./build-emacs.sh -s install_deps -y
+
+    - name: Build Emacs
+      run: ./build-emacs.sh -s kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon -y
