@@ -9,13 +9,15 @@ on:
       - main
 
 jobs:
-  build:
-    name: Build Emacs on Ubuntu
+  build-ubuntu-latest:
+    name: Build Emacs on Ubuntu Latest
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Setup Environment
       run: |
