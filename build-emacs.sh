@@ -5,6 +5,10 @@ export DEBIAN_FRONTEND=noninteractive
 set -e
 set -o pipefail
 
+if [ "${VERBOSE}" = "true" ]; then
+  set -x
+fi
+
 SKIP_PROMPT="false"
 EMACS_DIRECTORY="$HOME/emacs"
 EMACS_REMOTE_URL="https://git.savannah.gnu.org/git/emacs.git"
@@ -226,6 +230,13 @@ build_emacs() {
   fi
 
   ./autogen.sh
+
+  if [ "$XDG_SESSION_TYPE" = "xwayland" ]; then
+    CONFIGURE_FLAGS="--with-x-toolkit=gtk3"
+  else
+    CONFIGURE_FLAGS=""
+  fi
+
   ./configure \
     --with-dbus \
     --with-pgtk \
@@ -242,7 +253,7 @@ build_emacs() {
     --with-xft \
     --with-xml2 \
     --with-jpeg \
-    --with-x-toolkit=gtk3 \
+    "$CONFIGURE_FLAGS" \
     --with-harfbuzz
 
   make "-j$(nproc)"
