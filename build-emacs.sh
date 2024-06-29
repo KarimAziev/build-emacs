@@ -12,6 +12,16 @@ fi
 SKIP_PROMPT="false"
 EMACS_DIRECTORY="$HOME/emacs"
 EMACS_REMOTE_URL="https://git.savannah.gnu.org/git/emacs.git"
+CONFIGURE_OPTIONS=""
+
+DEFAULT_CONFIGURE_OPTIONS=(
+  "--with-pgtk"
+  "--with-xwidgets"
+  "--with-native-compilation=aot"
+  "--without-compress-install"
+  "--with-tree-sitter"
+  "--with-mailutils"
+)
 
 steps=(
   install_deps
@@ -34,10 +44,12 @@ usage() {
   echo "  -y              Skip all prompts and directly proceed with the installation and configuration steps."
   echo "  -s  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       Specify the exact steps to execute. Steps should be separated by commas. By default, all steps are enabled."
   echo "  -n  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       Specify the steps to skip. Steps should be separated by commas."
+  echo "  -c  OPTIONS     Specify additional configure options for building Emacs. Options should be separated by commas."
   echo
   echo "Examples:"
   echo "  $0 -p \$HOME/myemacs -s pull_emacs,build_emacs,install_emacs - Perform only the pull, build, and install steps."
   echo "  $0 -p \$HOME/myemacs -n install_deps,pull_emacs - Skip installing dependencies and pulling the Emacs source, using the directory \$HOME/myemacs."
+  echo "  $0 -c --with-native-compilation=no,--without-pgtk - Specify additional configure options for building Emacs."
   exit 0
 }
 
@@ -66,7 +78,7 @@ set_steps() {
 }
 
 parse_arguments() {
-  while getopts ":hn:p:ys:u:" OPTION; do
+  while getopts ":hn:p:ys:u:c:" OPTION; do
     case $OPTION in
       h)
         usage
@@ -87,6 +99,9 @@ parse_arguments() {
       u)
         EMACS_REMOTE_URL="$OPTARG"
         ;;
+      c)
+        CONFIGURE_OPTIONS="$OPTARG"
+        ;;
       ?)
         echo "Illegal option: -$OPTARG"
         usage
@@ -99,6 +114,8 @@ parse_arguments() {
 
 main() {
   parse_arguments "$@"
+
+  process_configure_options
 
   for step in "${steps[@]}"; do
     if [ $SKIP_PROMPT == "yes" ]; then
@@ -220,6 +237,43 @@ remove_emacs() {
   fi
 }
 
+process_configure_options() {
+  local oldIFS="$IFS"
+  IFS=',' read -r -a USER_CONFIGURE_OPTIONS_ARRAY <<< "$CONFIGURE_OPTIONS"
+  IFS="$oldIFS"
+
+  for user_option in "${USER_CONFIGURE_OPTIONS_ARRAY[@]}"; do
+    if [[ "$user_option" == --without-* ]]; then
+      # Extract the feature name (e.g., --without-pgtk -> pgtk)
+      feature="${user_option#--without-}"
+      # Remove the corresponding default option (e.g., --with-pgtk)
+      DEFAULT_CONFIGURE_OPTIONS=("${DEFAULT_CONFIGURE_OPTIONS[@]/--with-$feature}")
+      # Also remove the --without- option from user options
+      USER_CONFIGURE_OPTIONS_ARRAY=("${USER_CONFIGURE_OPTIONS_ARRAY[@]/$user_option}")
+    elif [[ "$user_option" == --with-* ]]; then
+      # Extract the feature name up to the first '=' character, if present
+      feature="${user_option#--with-}"
+      feature="${feature%%=*}"
+      # Remove any conflicting default option (e.g., --with-native-compilation=aot)
+      DEFAULT_CONFIGURE_OPTIONS=("${DEFAULT_CONFIGURE_OPTIONS[@]/--with-$feature*}")
+    fi
+  done
+
+  CONFIGURE_OPTIONS_ARRAY=("${DEFAULT_CONFIGURE_OPTIONS[@]}" "${USER_CONFIGURE_OPTIONS_ARRAY[@]}")
+
+  if [ "$XDG_SESSION_TYPE" = "xwayland" ]; then
+      for option in "${CONFIGURE_OPTIONS_ARRAY[@]}"; do
+          if [[ "$option" == "--with-pgtk" ]]; then
+              CONFIGURE_OPTIONS_ARRAY+=("--with-x-toolkit=gtk3")
+              break
+          fi
+      done
+  fi
+
+  echo "Emacs will be configured with such options: ${CONFIGURE_OPTIONS_ARRAY[*]}"
+}
+
+
 build_emacs() {
   if [ ! -d "$EMACS_DIRECTORY" ]; then
     echo >&2 "build_emacs: Error - Directory '$EMACS_DIRECTORY' doesn't exist."
@@ -231,30 +285,10 @@ build_emacs() {
 
   ./autogen.sh
 
-  if [ "$XDG_SESSION_TYPE" = "xwayland" ]; then
-    CONFIGURE_FLAGS="--with-x-toolkit=gtk3"
-  else
-    CONFIGURE_FLAGS=""
-  fi
+  echo "Emacs will be configured with such options: ${CONFIGURE_OPTIONS_ARRAY[*]}"
 
   ./configure \
-    --with-dbus \
-    --with-pgtk \
-    --with-xwidgets \
-    --with-native-compilation=aot \
-    --with-modules \
-    --with-mailutils \
-    --without-compress-install \
-    --with-tree-sitter \
-    --with-gif \
-    --with-png \
-    --with-tiff \
-    --with-xpm \
-    --with-xft \
-    --with-xml2 \
-    --with-jpeg \
-    "$CONFIGURE_FLAGS" \
-    --with-harfbuzz
+    "${CONFIGURE_OPTIONS_ARRAY[@]}"
 
   make "-j$(nproc)"
 }

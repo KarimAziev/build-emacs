@@ -10,21 +10,21 @@ You can run the script with different flags to modify its behavior. The availabl
 - `-y`: Skip all prompts and directly proceed with the installation and configuration steps.
 - `-s [OPTIONS]`: Specify the exact steps to execute. Available steps are: `install_deps`, `kill_emacs`, `remove_emacs`, `pull_emacs`, `build_emacs`, `install_emacs`, `fix_emacs_xwidgets`, `copy_emacs_icon`. Steps should be separated by commas. By default, all steps are enabled.
 - `-n [OPTIONS]`: Specifies the steps to skip. Available steps are the same as listed for the `-s` option.
+- `-c OPTIONS`: Specify additional configure options for building Emacs. Options should be separated by commas.
+
 
 # Emacs Installer Script for Ubuntu 22
-
 > - [About](#about)
 >   - [Requirements](#requirements)
 >   - [Steps](#steps)
 >   - [Usage](#usage)
 >     - [Prompt Every Step (Default)](#prompt-every-step-default)
->     - [Execute All Steps Without
->       Prompt](#execute-all-steps-without-prompt)
+>     - [Execute All Steps Without Prompt](#execute-all-steps-without-prompt)
 >     - [Execute Specific Steps](#execute-specific-steps)
 >     - [Skip Certain Steps](#skip-certain-steps)
 >     - [Use a Custom Directory](#use-a-custom-directory)
->   - [List of packages that will be
->     installed](#list-of-packages-that-will-be-installed)
+>     - [Override Default Configure Options](#override-default-configure-options)
+>   - [List of packages that will be installed](#list-of-packages-that-will-be-installed)
 >   - [Disclaimer](#disclaimer)
 
 ## Requirements
@@ -129,6 +129,31 @@ Or, if you have the script downloaded:
 
 ```shell
 ./build-emacs.sh -p $HOME/myemacs
+```
+
+### Override Default Configure Options
+
+The script uses the following default configure options for building Emacs:
+
+- `--with-pgtk`
+- `--with-xwidgets`
+- `--with-native-compilation=aot`
+- `--without-compress-install`
+- `--with-tree-sitter`
+- `--with-mailutils`
+
+You can override these options or add new ones using the `-c` argument. Options should be separated by commas.
+
+For example, to disable native compilation and PGTK, you can use:
+
+```shell
+bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -c --with-native-compilation=no,--without-pgtk"
+```
+
+Or, if you have the script downloaded:
+
+```shell
+./build-emacs.sh -c --with-native-compilation=no,--without-pgtk
 ```
 
 ## List of packages that will be installed
