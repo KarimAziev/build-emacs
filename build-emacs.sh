@@ -112,10 +112,20 @@ parse_arguments() {
   shift $((OPTIND - 1))
 }
 
+refresh_sudo() {
+  while true; do
+    sudo -v
+    sleep 60
+  done &
+}
+
 main() {
   parse_arguments "$@"
 
   process_configure_options
+
+  sudo -v
+  refresh_sudo
 
   for step in "${steps[@]}"; do
     if [ $SKIP_PROMPT == "yes" ]; then
