@@ -230,6 +230,7 @@ pull_emacs() {
     if [ "$current_origin_url" != "$EMACS_REMOTE_URL" ]; then
       echo "Updating origin to $EMACS_REMOTE_URL"
       git remote set-url origin "$EMACS_REMOTE_URL"
+
     fi
 
     echo "Pulling emacs"
@@ -257,32 +258,31 @@ process_configure_options() {
       # Extract the feature name (e.g., --without-pgtk -> pgtk)
       feature="${user_option#--without-}"
       # Remove the corresponding default option (e.g., --with-pgtk)
-      DEFAULT_CONFIGURE_OPTIONS=("${DEFAULT_CONFIGURE_OPTIONS[@]/--with-$feature}")
+      DEFAULT_CONFIGURE_OPTIONS=("${DEFAULT_CONFIGURE_OPTIONS[@]/--with-$feature/}")
       # Also remove the --without- option from user options
-      USER_CONFIGURE_OPTIONS_ARRAY=("${USER_CONFIGURE_OPTIONS_ARRAY[@]/$user_option}")
+      USER_CONFIGURE_OPTIONS_ARRAY=("${USER_CONFIGURE_OPTIONS_ARRAY[@]/$user_option/}")
     elif [[ "$user_option" == --with-* ]]; then
       # Extract the feature name up to the first '=' character, if present
       feature="${user_option#--with-}"
       feature="${feature%%=*}"
       # Remove any conflicting default option (e.g., --with-native-compilation=aot)
-      DEFAULT_CONFIGURE_OPTIONS=("${DEFAULT_CONFIGURE_OPTIONS[@]/--with-$feature*}")
+      DEFAULT_CONFIGURE_OPTIONS=("${DEFAULT_CONFIGURE_OPTIONS[@]/--with-$feature*/}")
     fi
   done
 
   CONFIGURE_OPTIONS_ARRAY=("${DEFAULT_CONFIGURE_OPTIONS[@]}" "${USER_CONFIGURE_OPTIONS_ARRAY[@]}")
 
   if [ "$XDG_SESSION_TYPE" = "xwayland" ]; then
-      for option in "${CONFIGURE_OPTIONS_ARRAY[@]}"; do
-          if [[ "$option" == "--with-pgtk" ]]; then
-              CONFIGURE_OPTIONS_ARRAY+=("--with-x-toolkit=gtk3")
-              break
-          fi
-      done
+    for option in "${CONFIGURE_OPTIONS_ARRAY[@]}"; do
+      if [[ "$option" == "--with-pgtk" ]]; then
+        CONFIGURE_OPTIONS_ARRAY+=("--with-x-toolkit=gtk3")
+        break
+      fi
+    done
   fi
 
   echo "Emacs will be configured with such options: ${CONFIGURE_OPTIONS_ARRAY[*]}"
 }
-
 
 build_emacs() {
   if [ ! -d "$EMACS_DIRECTORY" ]; then
