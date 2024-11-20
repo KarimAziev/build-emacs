@@ -136,7 +136,7 @@ Or, if you have the script downloaded:
 The script uses the following default configure options for building Emacs:
 
 - `--with-pgtk`
-- `--with-xwidgets`
+- `--with-xwidgets` (if the installed version of `libwebkit2gtk-4.1-0` is between `2.12` (inclusive) and `2.41.92` (exclusive))
 - `--with-native-compilation=aot`
 - `--without-compress-install`
 - `--with-tree-sitter`
