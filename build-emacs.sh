@@ -14,9 +14,22 @@ EMACS_DIRECTORY="$HOME/emacs"
 EMACS_REMOTE_URL="https://git.savannah.gnu.org/git/emacs.git"
 CONFIGURE_OPTIONS=""
 
+WEBKIT_REQUIRED=2.12
+WEBKIT_BROKEN=2.41.92
+
+# Fetch the installed version of libwebkit2gtk-4.1
+WEBKIT_VERSION=$(dpkg-query -W -f='${Version}\n' libwebkit2gtk-4.1-0 2> /dev/null | cut -d '-' -f1 || true)
+
+version_ge() {
+  dpkg --compare-versions "$1" ge "$2"
+}
+
+version_lt() {
+  dpkg --compare-versions "$1" lt "$2"
+}
+
 DEFAULT_CONFIGURE_OPTIONS=(
   "--with-pgtk"
-  "--with-xwidgets"
   "--with-native-compilation=aot"
   "--without-compress-install"
   "--with-tree-sitter"
@@ -30,9 +43,20 @@ steps=(
   pull_emacs
   build_emacs
   install_emacs
-  fix_emacs_xwidgets
   copy_emacs_icon
 )
+
+if version_ge "$WEBKIT_VERSION" "$WEBKIT_REQUIRED" && version_lt "$WEBKIT_VERSION" "$WEBKIT_BROKEN"; then
+  DEFAULT_CONFIGURE_OPTIONS+=("--with-xwidgets")
+  steps+=(fix_emacs_xwidgets)
+else
+  if [[ -z "$WEBKIT_VERSION" ]]; then
+    echo "Xwidgets are not available. libwebkit2gtk-4.1-0 version $WEBKIT_REQUIRED or higher, but lower than $WEBKIT_BROKEN, is required."
+  else
+    echo "Xwidgets are not available. Detected libwebkit2gtk-4.1-0 version is $WEBKIT_VERSION. Version $WEBKIT_REQUIRED or higher but lower than $WEBKIT_BROKEN is required."
+  fi
+fi
+
 usage() {
   echo "Usage: $0 [OPTION]..."
   echo "Install and configure Emacs using specified options."
@@ -174,7 +198,7 @@ fix_emacs_xwidgets() {
 }
 
 install_deps() {
-  local pkgs=(libwebkit2gtk-4.1-dev build-essential autoconf make gcc libgnutls28-dev
+  local pkgs=(build-essential autoconf make gcc libgnutls28-dev
     libgccjit-11-dev libgccjit-12-dev libtiff5-dev libgif-dev libjpeg-dev
     libpng-dev libxpm-dev libncurses-dev texinfo libgccjit0
     libgccjit-10-dev gcc-10 g++-10 sqlite3
