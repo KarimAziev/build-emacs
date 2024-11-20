@@ -12,8 +12,8 @@ You can run the script with different flags to modify its behavior. The availabl
 - `-n [OPTIONS]`: Specifies the steps to skip. Available steps are the same as listed for the `-s` option.
 - `-c OPTIONS`: Specify additional configure options for building Emacs. Options should be separated by commas.
 
-
 # Emacs Installer Script for Ubuntu 22
+
 > - [About](#about)
 >   - [Requirements](#requirements)
 >   - [Steps](#steps)
@@ -285,7 +285,6 @@ Or, if you have the script downloaded:
 | libwayland-cursor0             | wayland compositor infrastructure - cursor library                             |
 | libwayland-egl1                | wayland compositor infrastructure - EGL library                                |
 | libwayland-server0             | wayland compositor infrastructure - server library                             |
-| libwebkit2gtk-4.1-dev          | Web content engine library for GTK - development files                         |
 | libwebpdemux2                  | Lossy compression of digital photographic images.                              |
 | libwoff1                       | library for converting fonts to WOFF 2.0                                       |
 | libx11-6                       | X11 client-side library                                                        |
