@@ -55,7 +55,7 @@ By default, the script runs **all steps non-interactively**. You can simply exec
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh)"
 ```
 
-Or, if you’ve downloaded the script locally:
+Or, if you've downloaded the script locally:
 
 ```bash
 ./build-emacs.sh
@@ -71,13 +71,13 @@ Or, if you’ve downloaded the script locally:
 If you prefer to review and confirm each step before it is executed, use the `-i` flag to enable **interactive mode**:
 
 ```bash
-bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -i"
+./build-emacs.sh -i
 ```
 
-Or, if you’ve downloaded the script locally:
+Or, if you haven't downloaded the script locally:
 
 ```bash
-./build-emacs.sh -i
+wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh | bash -s -- -i
 ```
 
 In this mode, you will be prompted for confirmation before each step. For example:
@@ -93,7 +93,7 @@ Execute install_deps? [Y/n]
 Use the `-s` flag to specify exact steps you want to execute, separated by commas (`,`). For example, to only clone the Emacs repository, build it, and install it:
 
 ```bash
-bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -s pull_emacs,build_emacs,install_emacs"
+wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh | bash -s -- -s pull_emacs,build_emacs,install_emacs
 ```
 
 Or, if you've downloaded the script locally:
@@ -112,6 +112,12 @@ The `-n` flag lets you omit specific steps. For instance, to skip installing dep
 ./build-emacs.sh -n install_deps,pull_emacs
 ```
 
+Or, if you haven't downloaded the script locally:
+
+```bash
+wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh | bash -s -- -n install_deps,pull_emacs
+```
+
 This will run all steps except `install_deps` and `pull_emacs`.
 
 ---
@@ -121,7 +127,7 @@ This will run all steps except `install_deps` and `pull_emacs`.
 To specify a directory where Emacs should be cloned and built, use the `-p` flag followed by the path:
 
 ```bash
-bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -p $HOME/myemacs"
+wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh | bash -s -- -p $HOME/myemacs
 ```
 
 Or, if you've downloaded the script locally:
@@ -331,6 +337,8 @@ To see all available options, use the `-h` flag:
 | texinfo                        | Documentation system for on-line information and printed output                |
 | xaw3dg-dev                     | Xaw3d widget set development package                                           |
 | zlib1g-dev                     | compression library - development                                              |
+
+---
 
 ## Disclaimer
 
