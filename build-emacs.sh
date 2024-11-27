@@ -141,6 +141,16 @@ refresh_sudo() {
     sudo -v
     sleep 60
   done &
+  SUDO_REFRESH_PID=$! # Capture PID of the background process
+
+  if ! kill -s 0 $SUDO_REFRESH_PID 2> /dev/null; then
+    echo >&2 "Error: Failed to start refresh_sudo background process."
+    exit 1
+  fi
+}
+
+cleanup() {
+  kill $SUDO_REFRESH_PID 2> /dev/null
 }
 
 main() {
@@ -148,20 +158,22 @@ main() {
 
   process_configure_options
 
+  # Update the user's cached credentials
   sudo -v
   refresh_sudo
+  trap cleanup EXIT
 
   for step in "${steps[@]}"; do
     if [ $SKIP_PROMPT == "yes" ]; then
       $step
     else
       read -r -p "Execute $step? [Y/n] " answer
-      case ${answer:-Y} in # set default to Y
+      case ${answer:-Y} in # Set default to Y
         [yY]*)
           $step
           ;;
         *)
-          echo "Skipping $step" # print a message when skipping
+          echo "Skipping $step"
           ;;
       esac
     fi
