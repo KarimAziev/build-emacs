@@ -9,7 +9,7 @@ if [ "${VERBOSE}" = "true" ]; then
   set -x
 fi
 
-SKIP_PROMPT="false"
+SKIP_PROMPT=${SKIP_PROMPT:-yes}
 EMACS_DIRECTORY="$HOME/emacs"
 EMACS_REMOTE_URL="https://git.savannah.gnu.org/git/emacs.git"
 CONFIGURE_OPTIONS=""
@@ -63,17 +63,29 @@ usage() {
   echo
   echo "Options:"
   echo "  -h              Display this help message and exit."
+  echo "  -i              Run in interactive mode, prompting for confirmation at each step."
+  echo "  -y              Run in non-interactive mode (default) and execute all steps without prompting."
   echo "  -p  DIRECTORY   Specify the Emacs installation directory. Default is '\$HOME/emacs'."
   echo "  -u  URL         Specify the remote URL of the Emacs Git repository. Default is https://git.savannah.gnu.org/git/emacs.git."
-  echo "  -y              Skip all prompts and directly proceed with the installation and configuration steps."
-  echo "  -s  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       Specify the exact steps to execute. Steps should be separated by commas. By default, all steps are enabled."
-  echo "  -n  [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]       Specify the steps to skip. Steps should be separated by commas."
+  echo "  -s  STEPS       Specify the exact steps to execute. Steps should be separated by commas."
+  echo "                  Available steps: install_deps, kill_emacs, remove_emacs, pull_emacs,"
+  echo "                  build_emacs, install_emacs, fix_emacs_xwidgets, copy_emacs_icon."
+  echo "  -n  STEPS       Specify the steps to skip. Steps should be separated by commas."
+  echo "                  Available steps: install_deps, kill_emacs, remove_emacs, pull_emacs,"
+  echo "                  build_emacs, install_emacs, fix_emacs_xwidgets, copy_emacs_icon."
+  echo "                  By default, all steps are enabled."
   echo "  -c  OPTIONS     Specify additional configure options for building Emacs. Options should be separated by commas."
   echo
   echo "Examples:"
-  echo "  $0 -p \$HOME/myemacs -s pull_emacs,build_emacs,install_emacs - Perform only the pull, build, and install steps."
-  echo "  $0 -p \$HOME/myemacs -n install_deps,pull_emacs - Skip installing dependencies and pulling the Emacs source, using the directory \$HOME/myemacs."
-  echo "  $0 -c --with-native-compilation=no,--without-pgtk - Specify additional configure options for building Emacs."
+  echo "  $0                              Run all steps in non-interactive mode (default)."
+  echo "  $0 -i                           Run all steps in interactive mode, prompting for confirmation at each step."
+  echo "  $0 -y                           Explicitly run all steps in non-interactive mode (same as default)."
+  echo "  $0 -p \$HOME/myemacs -s pull_emacs,build_emacs,install_emacs"
+  echo "                                  Perform only the pull, build, and install steps in non-interactive mode."
+  echo "  $0 -p \$HOME/myemacs -n install_deps,pull_emacs"
+  echo "                                  Skip installing dependencies and pulling the Emacs source."
+  echo "  $0 -c --with-native-compilation=no,--without-pgtk"
+  echo "                                  Specify additional configure options for building Emacs."
   exit 0
 }
 
@@ -102,17 +114,31 @@ set_steps() {
 }
 
 parse_arguments() {
-  while getopts ":hn:p:ys:u:c:" OPTION; do
+  mode="default"
+  while getopts ":hin:p:ys:u:c:" OPTION; do
     case $OPTION in
       h)
         usage
         exit 0
         ;;
-      p)
-        EMACS_DIRECTORY=$(readlink -f "$OPTARG")
+      i)
+        if [ "$mode" = "non-interactive" ]; then
+          echo >&2 "Error: Cannot use -i (interactive) and -y (non-interactive) together."
+          exit 1
+        fi
+        mode="interactive"
+        SKIP_PROMPT="no"
         ;;
       y)
+        if [ "$mode" = "interactive" ]; then
+          echo >&2 "Error: Cannot use -i (interactive) and -y (non-interactive) together."
+          exit 1
+        fi
+        mode="non-interactive"
         SKIP_PROMPT="yes"
+        ;;
+      p)
+        EMACS_DIRECTORY=$(readlink -f "$OPTARG")
         ;;
       n)
         filter_steps "$OPTARG"
@@ -156,26 +182,24 @@ cleanup() {
 main() {
   parse_arguments "$@"
 
+  echo "Running in $([ "$SKIP_PROMPT" = "yes" ] && echo 'non-interactive' || echo 'interactive') mode."
+  echo "Steps to execute: ${steps[*]}"
+
   process_configure_options
 
-  # Update the user's cached credentials
-  sudo -v
+  sudo -v # Update the user's cached credentials
   refresh_sudo
   trap cleanup EXIT
 
   for step in "${steps[@]}"; do
-    if [ $SKIP_PROMPT == "yes" ]; then
-      $step
-    else
+    if [ "$SKIP_PROMPT" = "no" ]; then
       read -r -p "Execute $step? [Y/n] " answer
-      case ${answer:-Y} in # Set default to Y
-        [yY]*)
-          $step
-          ;;
-        *)
-          echo "Skipping $step"
-          ;;
+      case ${answer:-Y} in
+        [yY]*) $step ;;
+        *) echo "Skipping $step" ;;
       esac
+    else
+      $step
     fi
   done
 }
@@ -190,8 +214,6 @@ copy_emacs_icon() {
   if [ -f "$emacs_desktop_filename" ]; then
     echo "Loading emacs icon"
     mkdir -p "$download_dir"
-
-    echo "Loading emacs icon"
 
     wget -O "$download_dir/emacs.svg" "$icon_url" \
       && sudo sed -i "s|^\(Icon=\).*|\1$download_dir/emacs.svg|" "$emacs_desktop_filename"

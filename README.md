@@ -1,160 +1,170 @@
 # About
 
-This is a bash script to automate the installation of Emacs on Ubuntu 22 with Wayland.
+This is a Bash script that automates the process of building and installing the latest version of Emacs from source on `Ubuntu 22` with either `Wayland` or `X11` display servers.
 
-You can run the script with different flags to modify its behavior. The available options are:
+The script can be customized to execute or skip specific steps, use a custom installation directory, or include additional configuration options.
 
-- `-h`: Display the help message and exit.
-- `-p DIRECTORY`: Specify the Emacs installation directory. The default is `$HOME/emacs`.
-- `-u URL`: Specify the remote URL of the Emacs Git repository. The default is <https://git.savannah.gnu.org/git/emacs.git>.
-- `-y`: Skip all prompts and directly proceed with the installation and configuration steps.
-- `-s [OPTIONS]`: Specify the exact steps to execute. Available steps are: `install_deps`, `kill_emacs`, `remove_emacs`, `pull_emacs`, `build_emacs`, `install_emacs`, `fix_emacs_xwidgets`, `copy_emacs_icon`. Steps should be separated by commas. By default, all steps are enabled.
-- `-n [OPTIONS]`: Specifies the steps to skip. Available steps are the same as listed for the `-s` option.
-- `-c OPTIONS`: Specify additional configure options for building Emacs. Options should be separated by commas.
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 
-# Emacs Installer Script for Ubuntu 22
+**Table of Contents**
 
 > - [About](#about)
 >   - [Requirements](#requirements)
->   - [Steps](#steps)
->   - [Usage](#usage)
->     - [Prompt Every Step (Default)](#prompt-every-step-default)
->     - [Execute All Steps Without Prompt](#execute-all-steps-without-prompt)
+>   - [Steps Performed by the Script](#steps-performed-by-the-script)
+>     - [Run All Steps in Non-Interactive Mode (Default)](#run-all-steps-in-non-interactive-mode-default)
+>     - [Run All Steps in Interactive Mode](#run-all-steps-in-interactive-mode)
 >     - [Execute Specific Steps](#execute-specific-steps)
 >     - [Skip Certain Steps](#skip-certain-steps)
->     - [Use a Custom Directory](#use-a-custom-directory)
->     - [Override Default Configure Options](#override-default-configure-options)
+>     - [Use a Custom Installation Directory](#use-a-custom-installation-directory)
+>     - [Add or Override Configuration Options](#add-or-override-configuration-options)
+>     - [Display Help](#display-help)
 >   - [List of packages that will be installed](#list-of-packages-that-will-be-installed)
 >   - [Disclaimer](#disclaimer)
 
+<!-- markdown-toc end -->
+
 ## Requirements
 
-This script requires that you have `bash`, `git`, and `sudo` privilege.
-It's designed to work on `Ubuntu 22`.
+- **Bash**: Required to run the script.
+- **Git**: The Emacs source is cloned from a remote Git repository.
+- **Sudo Privileges**: Many operations, such as installing packages and configuring system files, require elevated permissions.
 
-## Steps
+---
 
-Here are the steps that this script will perform in order:
+## Steps Performed by the Script
 
-1.  `install_deps`: Install the necessary
-    [dependencies](#list-of-packages-that-will-be-installed) for Emacs.
-2.  `kill_emacs`: Kill any running Emacs process.
-3.  `remove_emacs`: Uninstall Emacs and perform a clean up.
-4.  `pull_emacs`: Pull the latest Emacs source code.
-5.  `build_emacs`: Build Emacs from the source code.
-6.  `install_emacs`: Install Emacs from the built source code.
-7.  `fix_emacs_xwidgets`: Fix
-    [issue](https://git.savannah.gnu.org/cgit/emacs.git/tree/etc/PROBLEMS?h=master#n181)
-    related to Emacs XWidgets.
-8.  `copy_emacs_icon`: Download and replace the default Emacs Icon with
-    the [Spacemacs logo](https://github.com/nashamri/spacemacs-logo) by
-    Nasser Alshammari.
+> [!TIP]
+> By default, the script executes all installation steps **non-interactively** in sequence. If you prefer to confirm each step manually, you can opt into **interactive mode** with the `-i` flag.
 
-## Usage
+Here are the steps the script performs sequentially:
 
-### Prompt Every Step (Default)
+1. `install_deps`: Installs all the required [system packages](#list-of-packages-that-will-be-installed) (e.g., build tools and libraries).
+2. `kill_emacs`: Ensures that no running Emacs process is active.
+3. `remove_emacs`: Cleans up any previous Emacs installation (if applicable).
+4. `pull_emacs`: Clones or updates the Emacs source repository to the latest version.
+5. `build_emacs`: Configures and builds Emacs using the specified options.
+6. `install_emacs`: Installs Emacs to the system (e.g., `/usr/local`).
+7. `fix_emacs_xwidgets`: Fixes known [issue](https://git.savannah.gnu.org/cgit/emacs.git/tree/etc/PROBLEMS?h=master#n181) with XWidgets.
+8. `copy_emacs_icon`: Replaces the default Emacs icon with a new icon (the [Spacemacs logo](https://github.com/nashamri/spacemacs-logo)).
 
-To execute the build and installation script step-by-step, use the
-following command:
+### Run All Steps in Non-Interactive Mode (Default)
 
-```shell
+By default, the script runs **all steps non-interactively**. You can simply execute it without any options:
+
+```bash
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh)"
 ```
 
-If you have already downloaded the script, simply execute:
+Or, if you’ve downloaded the script locally:
 
-```shell
+```bash
 ./build-emacs.sh
 ```
 
-### Execute All Steps Without Prompt
+> [!IMPORTANT]
+> This mode assumes "yes" to all prompts and ensures a fully automated installation.
 
-To execute all steps without prompting, use the `-y` argument (which
-assumes "yes") to each question.
+---
 
-```shell
-bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -y"
+### Run All Steps in Interactive Mode
+
+If you prefer to review and confirm each step before it is executed, use the `-i` flag to enable **interactive mode**:
+
+```bash
+bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -i"
 ```
 
-Or, if you have the script downloaded:
+Or, if you’ve downloaded the script locally:
 
-```shell
-./build-emacs.sh -y
+```bash
+./build-emacs.sh -i
 ```
+
+In this mode, you will be prompted for confirmation before each step. For example:
+
+```
+Execute install_deps? [Y/n]
+```
+
+---
 
 ### Execute Specific Steps
 
-To execute specific steps, use the `-s` argument with the desired steps,
-separated by commas. For instance, to only compile (`build_emacs`) and
-install (`install_emacs`) Emacs skipping other steps:
+Use the `-s` flag to specify exact steps you want to execute, separated by commas (`,`). For example, to only clone the Emacs repository, build it, and install it:
 
-```shell
-bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -s build_emacs,install_emacs"
+```bash
+bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -s pull_emacs,build_emacs,install_emacs"
 ```
 
-Or, if you have the script downloaded:
+Or, if you've downloaded the script locally:
 
-```shell
-./build-emacs.sh -s build_emacs,install_emacs
+```bash
+./build-emacs.sh -s pull_emacs,build_emacs,install_emacs
 ```
+
+---
 
 ### Skip Certain Steps
 
-You can also skip certain steps using the `-n` argument, followed by the
-steps you wish to omit.
+The `-n` flag lets you omit specific steps. For instance, to skip installing dependencies (`install_deps`) and pulling the Emacs source (`pull_emacs`):
 
-The example below will execute all steps except installing dependencies
-(`install_deps`).
-
-```shell
-bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -n install_deps"
+```bash
+./build-emacs.sh -n install_deps,pull_emacs
 ```
 
-Or, if you have the script downloaded:
+This will run all steps except `install_deps` and `pull_emacs`.
 
-```shell
-./build-emacs.sh -n install_deps
-```
+---
 
-### Use a Custom Directory
+### Use a Custom Installation Directory
 
-To build in a custom directory, use the `-p` argument, followed by the
-path to your directory:
+To specify a directory where Emacs should be cloned and built, use the `-p` flag followed by the path:
 
-```shell
+```bash
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -p $HOME/myemacs"
 ```
 
-Or, if you have the script downloaded:
+Or, if you've downloaded the script locally:
 
-```shell
+```bash
 ./build-emacs.sh -p $HOME/myemacs
 ```
 
-### Override Default Configure Options
+The default directory is `$HOME/emacs`.
 
-The script uses the following default configure options for building Emacs:
+---
+
+### Add or Override Configuration Options
+
+The script uses the following default build options:
 
 - `--with-pgtk`
-- `--with-xwidgets` (if the installed version of `libwebkit2gtk-4.1-0` is between `2.12` (inclusive) and `2.41.92` (exclusive))
 - `--with-native-compilation=aot`
 - `--without-compress-install`
 - `--with-tree-sitter`
 - `--with-mailutils`
 
-You can override these options or add new ones using the `-c` argument. Options should be separated by commas.
+If `libwebkit2gtk-4.1` is installed and meets the required version, `--with-xwidgets` will also be added automatically.
 
-For example, to disable native compilation and PGTK, you can use:
+You can append or override these with the `-c` flag. For instance:
 
-```shell
-bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh) -c --with-native-compilation=no,--without-pgtk"
-```
-
-Or, if you have the script downloaded:
-
-```shell
+```bash
 ./build-emacs.sh -c --with-native-compilation=no,--without-pgtk
 ```
+
+This example disables both native compilation and PGTK.
+
+---
+
+### Display Help
+
+To see all available options, use the `-h` flag:
+
+```bash
+./build-emacs.sh -h
+```
+
+---
 
 ## List of packages that will be installed
 
@@ -324,6 +334,4 @@ Or, if you have the script downloaded:
 
 ## Disclaimer
 
-Please review the script before running it. I take no responsibility for
-any adverse effects it may have on your system. Always ensure you have a
-backup of your important data.
+Please review the script before running it. I take no responsibility for any adverse effects it may have on your system. Always ensure you have a backup of your important data.
