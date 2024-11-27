@@ -255,11 +255,21 @@ pull_emacs() {
   if [ ! -d "$EMACS_DIRECTORY" ]; then
     echo "Cloning emacs"
 
-    git clone --depth 1 "$EMACS_REMOTE_URL" "$EMACS_DIRECTORY"
-    cd "$EMACS_DIRECTORY" || exit 1
+    if ! git clone --depth 1 "$EMACS_REMOTE_URL" "$EMACS_DIRECTORY"; then
+      echo "Error: Failed to clone Emacs repository. Check the URL or network connection."
+      exit 1
+    fi
+
+    cd "$EMACS_DIRECTORY" || {
+      echo >&2 "Error: The Emacs directory '$EMACS_DIRECTORY' does not exist."
+      exit 1
+    }
 
   else
-    cd "$EMACS_DIRECTORY" || exit 1
+    cd "$EMACS_DIRECTORY" || {
+      echo >&2 "Error: The Emacs directory '$EMACS_DIRECTORY' does not exist."
+      exit 1
+    }
 
     current_origin_url=$(git remote get-url origin)
 
@@ -276,7 +286,10 @@ pull_emacs() {
 
 remove_emacs() {
   if [ -d "$EMACS_DIRECTORY" ]; then
-    cd "$EMACS_DIRECTORY" || exit 1
+    cd "$EMACS_DIRECTORY" || {
+      echo >&2 "Error: The Emacs directory '$EMACS_DIRECTORY' does not exist."
+      exit 1
+    }
     echo "Uninstalling Emacs"
     sudo make uninstall
     echo "Cleaning Emacs"
