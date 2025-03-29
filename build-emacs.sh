@@ -454,6 +454,17 @@ build_emacs() {
 
   log_info "Emacs will be configured with such options: ${CONFIGURE_OPTIONS_ARRAY[*]}"
 
+  gcc_major_version=$(gcc -dumpversion | cut -d. -f1)
+  gccjit_dir="/usr/lib/gcc/x86_64-linux-gnu/${gcc_major_version}"
+
+  if [ -d "$gccjit_dir" ]; then
+    log_info "Using gcc jit directory: $gccjit_dir"
+    export LIBRARY_PATH="$gccjit_dir:$LIBRARY_PATH"
+    export LDFLAGS="-L$gccjit_dir $LDFLAGS"
+  else
+    log_warn "Directory $gccjit_dir does not exist. Proceeding without modifying LIBRARY_PATH or LDFLAGS."
+  fi
+
   run_cmd ./configure "${CONFIGURE_OPTIONS_ARRAY[@]}"
 
   log_info "Building Emacs"
