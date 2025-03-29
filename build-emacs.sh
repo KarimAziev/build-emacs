@@ -5,9 +5,32 @@ export DEBIAN_FRONTEND=noninteractive
 set -e
 set -o pipefail
 
+log_info() {
+  printf "\033[32m[INFO]\033[0m %s\n" "$1"
+}
+
+log_error() {
+  printf "\033[31m[ERROR]\033[0m %s\n" "$1" >&2
+}
+
+log_warn() {
+  echo -e "\033[1;33m[WARNING]\033[0m $1" >&2
+}
+
 if [ "${VERBOSE}" = "true" ]; then
   set -x
 fi
+
+DRY_RUN=${DRY_RUN:-false}
+
+run_cmd() {
+  if [ "$DRY_RUN" = true ]; then
+    log_info "Dry-run: $*"
+  else
+    log_info "Executing: $*"
+    "$@"
+  fi
+}
 
 SKIP_PROMPT=${SKIP_PROMPT:-yes}
 EMACS_DIRECTORY="$HOME/emacs"
@@ -46,16 +69,20 @@ steps=(
   copy_emacs_icon
 )
 
-if version_ge "$WEBKIT_VERSION" "$WEBKIT_REQUIRED" && version_lt "$WEBKIT_VERSION" "$WEBKIT_BROKEN"; then
-  DEFAULT_CONFIGURE_OPTIONS+=("--with-xwidgets")
-  steps+=(fix_emacs_xwidgets)
-else
-  if [[ -z "$WEBKIT_VERSION" ]]; then
-    echo "Xwidgets are not available. libwebkit2gtk-4.1-0 version $WEBKIT_REQUIRED or higher, but lower than $WEBKIT_BROKEN, is required."
+check_webkit_version() {
+  if version_ge "$WEBKIT_VERSION" "$WEBKIT_REQUIRED" && version_lt "$WEBKIT_VERSION" "$WEBKIT_BROKEN"; then
+    DEFAULT_CONFIGURE_OPTIONS+=("--with-xwidgets")
+    steps+=(fix_emacs_xwidgets)
   else
-    echo "Xwidgets are not available. Detected libwebkit2gtk-4.1-0 version is $WEBKIT_VERSION. Version $WEBKIT_REQUIRED or higher but lower than $WEBKIT_BROKEN is required."
+    if [[ -z "$WEBKIT_VERSION" ]]; then
+      log_warn "Xwidgets are not available. libwebkit2gtk-4.1-0 version $WEBKIT_REQUIRED or higher, but lower than $WEBKIT_BROKEN, is required."
+    else
+      log_warn "Xwidgets are not available. Detected libwebkit2gtk-4.1-0 version is $WEBKIT_VERSION. Version $WEBKIT_REQUIRED or higher but lower than $WEBKIT_BROKEN is required."
+    fi
   fi
-fi
+}
+
+check_webkit_version
 
 usage() {
   echo "Usage: $0 [OPTION]..."
@@ -66,6 +93,7 @@ usage() {
   echo "  -i              Run in interactive mode, prompting for confirmation at each step."
   echo "  -y              Run in non-interactive mode (default) and execute all steps without prompting."
   echo "  -p  DIRECTORY   Specify the Emacs installation directory. Default is '\$HOME/emacs'."
+  echo "  -d              Run in dry-run mode: instead of executing commands, the script will print what it would do."
   echo "  -u  URL         Specify the remote URL of the Emacs Git repository. Default is https://git.savannah.gnu.org/git/emacs.git."
   echo "  -s  STEPS       Specify the exact steps to execute. Steps should be separated by commas."
   echo "                  Available steps: install_deps, kill_emacs, remove_emacs, pull_emacs,"
@@ -115,15 +143,19 @@ set_steps() {
 
 parse_arguments() {
   mode="default"
-  while getopts ":hin:p:ys:u:c:" OPTION; do
+  while getopts ":dhin:p:ys:u:c:" OPTION; do
     case $OPTION in
+      d)
+        DRY_RUN=true
+        ;;
+
       h)
         usage
         exit 0
         ;;
       i)
         if [ "$mode" = "non-interactive" ]; then
-          echo >&2 "Error: Cannot use -i (interactive) and -y (non-interactive) together."
+          log_error >&2 "Error: Cannot use -i (interactive) and -y (non-interactive) together."
           exit 1
         fi
         mode="interactive"
@@ -131,7 +163,7 @@ parse_arguments() {
         ;;
       y)
         if [ "$mode" = "interactive" ]; then
-          echo >&2 "Error: Cannot use -i (interactive) and -y (non-interactive) together."
+          log_error >&2 "Error: Cannot use -i (interactive) and -y (non-interactive) together."
           exit 1
         fi
         mode="non-interactive"
@@ -153,7 +185,7 @@ parse_arguments() {
         CONFIGURE_OPTIONS="$OPTARG"
         ;;
       ?)
-        echo "Illegal option: -$OPTARG"
+        log_error "Illegal option: -$OPTARG"
         usage
         exit 1
         ;;
@@ -170,7 +202,7 @@ refresh_sudo() {
   SUDO_REFRESH_PID=$! # Capture PID of the background process
 
   if ! kill -s 0 $SUDO_REFRESH_PID 2> /dev/null; then
-    echo >&2 "Error: Failed to start refresh_sudo background process."
+    log_error >&2 "Error: Failed to start refresh_sudo background process."
     exit 1
   fi
 }
@@ -181,22 +213,28 @@ cleanup() {
 
 main() {
   parse_arguments "$@"
+  if [ "$DRY_RUN" = true ]; then
+    log_info "Running in dry-run mode. No commands will be executed."
+  else
+    log_info "Running in $([ "$SKIP_PROMPT" = "yes" ] && echo 'non-interactive' || echo 'interactive') mode."
+  fi
 
-  echo "Running in $([ "$SKIP_PROMPT" = "yes" ] && echo 'non-interactive' || echo 'interactive') mode."
-  echo "Steps to execute: ${steps[*]}"
+  log_info "Steps to execute: ${steps[*]}"
 
   process_configure_options
 
-  sudo -v # Update the user's cached credentials
-  refresh_sudo
-  trap cleanup EXIT
+  run_cmd sudo -v # Update the user's cached credentials
+
+  run_cmd refresh_sudo
+
+  run_cmd trap cleanup EXIT
 
   for step in "${steps[@]}"; do
     if [ "$SKIP_PROMPT" = "no" ]; then
       read -r -p "Execute $step? [Y/n] " answer
       case ${answer:-Y} in
         [yY]*) $step ;;
-        *) echo "Skipping $step" ;;
+        *) log_info "Skipping $step" ;;
       esac
     else
       $step
@@ -212,11 +250,11 @@ copy_emacs_icon() {
   local icon_url="https://raw.githubusercontent.com/nashamri/spacemacs-logo/master/spacemacs-logo.svg"
 
   if [ -f "$emacs_desktop_filename" ]; then
-    echo "Loading emacs icon"
-    mkdir -p "$download_dir"
+    log_info "Loading emacs icon"
+    run_cmd mkdir -p "$download_dir"
 
-    wget -O "$download_dir/emacs.svg" "$icon_url" \
-      && sudo sed -i "s|^\(Icon=\).*|\1$download_dir/emacs.svg|" "$emacs_desktop_filename"
+    run_cmd wget -O "$download_dir/emacs.svg" "$icon_url" \
+      && run_cmd sudo sed -i "s|^\(Icon=\).*|\1$download_dir/emacs.svg|" "$emacs_desktop_filename"
   fi
 }
 
@@ -227,7 +265,7 @@ fix_emacs_xwidgets() {
   if [ -f "$filename" ]; then
     # setting the environment variables SNAP, SNAP_NAME and SNAP_REVISION will
     # make WebKit use GLib to launch subprocesses instead
-    sudo sed -i 's|Exec=emacs %F|Exec=env SNAP=emacs SNAP_NAME=emacs SNAP_REVISION=1 emacs %F|' $filename
+    run_cmd sudo sed -i 's|Exec=emacs %F|Exec=env SNAP=emacs SNAP_NAME=emacs SNAP_REVISION=1 emacs %F|' $filename
   fi
 }
 
@@ -261,61 +299,61 @@ install_deps() {
     libxfixes3 libxi6 libxinerama1 libxkbcommon0 libxml2 libxpm4
     libxrandr2 libxrender1 libxslt1.1 libyajl2 clang libclang-dev)
 
-  sudo apt-get install --assume-yes "${pkgs[@]}"
+  run_cmd sudo apt-get install --assume-yes "${pkgs[@]}"
 }
 
 kill_emacs() {
   if pgrep emacs > /dev/null; then
-    echo "Emacs is running. Killing emacs"
-    pkill emacs
+    log_warn "Emacs is running. Killing emacs"
+    run_cmd pkill emacs
   else
-    echo "Emacs is not running."
+    log_info "Skipping killing Emacs: Emacs is not running."
   fi
 }
 
 pull_emacs() {
   if [ ! -d "$EMACS_DIRECTORY" ]; then
-    echo "Cloning emacs"
+    log_info "Cloning emacs"
 
-    if ! git clone --depth 1 "$EMACS_REMOTE_URL" "$EMACS_DIRECTORY"; then
-      echo "Error: Failed to clone Emacs repository. Check the URL or network connection."
+    if ! run_cmd git clone --depth 1 "$EMACS_REMOTE_URL" "$EMACS_DIRECTORY"; then
+      log_error "Error: Failed to clone Emacs repository. Check the URL or network connection."
       exit 1
     fi
 
     cd "$EMACS_DIRECTORY" || {
-      echo >&2 "Error: The Emacs directory '$EMACS_DIRECTORY' does not exist."
+      log_error >&2 "Error: The Emacs directory '$EMACS_DIRECTORY' does not exist."
       exit 1
     }
 
   else
     cd "$EMACS_DIRECTORY" || {
-      echo >&2 "Error: The Emacs directory '$EMACS_DIRECTORY' does not exist."
+      log_error >&2 "Error: The Emacs directory '$EMACS_DIRECTORY' does not exist."
       exit 1
     }
 
     current_origin_url=$(git remote get-url origin)
 
     if [ "$current_origin_url" != "$EMACS_REMOTE_URL" ]; then
-      echo "Updating origin to $EMACS_REMOTE_URL"
-      git remote set-url origin "$EMACS_REMOTE_URL"
+      log_info "Updating origin to $EMACS_REMOTE_URL"
+      run_cmd git remote set-url origin "$EMACS_REMOTE_URL"
 
     fi
 
-    echo "Pulling emacs"
-    git pull origin "$(git rev-parse --abbrev-ref HEAD)"
+    log_info "Pulling Emacs"
+    run_cmd git pull origin "$(git rev-parse --abbrev-ref HEAD)"
   fi
 }
 
 remove_emacs() {
   if [ -d "$EMACS_DIRECTORY" ]; then
     cd "$EMACS_DIRECTORY" || {
-      echo >&2 "Error: The Emacs directory '$EMACS_DIRECTORY' does not exist."
+      log_error >&2 "Error: The Emacs directory '$EMACS_DIRECTORY' does not exist."
       exit 1
     }
-    echo "Uninstalling Emacs"
-    sudo make uninstall
-    echo "Cleaning Emacs"
-    sudo make extraclean
+    log_info "Uninstalling Emacs"
+    run_cmd sudo make uninstall
+    log_info "Cleaning Emacs"
+    run_cmd sudo make extraclean
   fi
 }
 
@@ -352,37 +390,37 @@ process_configure_options() {
     done
   fi
 
-  echo "Emacs will be configured with such options: ${CONFIGURE_OPTIONS_ARRAY[*]}"
+  log_info "Emacs will be configured with such options: ${CONFIGURE_OPTIONS_ARRAY[*]}"
 }
 
 build_emacs() {
   if [ ! -d "$EMACS_DIRECTORY" ]; then
-    echo >&2 "build_emacs: Error - Directory '$EMACS_DIRECTORY' doesn't exist."
+    log_error >&2 "build_emacs: Error - Directory '$EMACS_DIRECTORY' doesn't exist."
     exit 1
   else
     cd "$EMACS_DIRECTORY"
-    echo "Building Emacs"
+    log_info "Running autogen.sh"
   fi
 
-  ./autogen.sh
+  run_cmd ./autogen.sh
 
-  echo "Emacs will be configured with such options: ${CONFIGURE_OPTIONS_ARRAY[*]}"
+  log_info "Emacs will be configured with such options: ${CONFIGURE_OPTIONS_ARRAY[*]}"
 
-  ./configure \
-    "${CONFIGURE_OPTIONS_ARRAY[@]}"
+  run_cmd ./configure "${CONFIGURE_OPTIONS_ARRAY[@]}"
 
-  make "-j$(nproc)"
+  log_info "Building Emacs"
+  run_cmd make "-j$(nproc)"
 }
 
 install_emacs() {
   if [ ! -d "$EMACS_DIRECTORY" ]; then
-    echo >&2 "install_emacs: Error - Directory '$EMACS_DIRECTORY' doesn't exist."
+    log_error >&2 "install_emacs: Error - Directory '$EMACS_DIRECTORY' doesn't exist."
     exit 1
   else
     cd "$EMACS_DIRECTORY"
-    echo "Installing Emacs"
+    log_info "Installing Emacs"
   fi
-  sudo make install
+  run_cmd sudo make install
 }
 
 main "$@"

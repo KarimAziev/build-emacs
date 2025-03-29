@@ -1,6 +1,6 @@
 # About
 
-This is a Bash script that automates the process of building and installing the latest version of Emacs from source on `Ubuntu 22` with either `Wayland` or `X11` display servers.
+This is a Bash script that automates the process of building and installing the latest version of Emacs from source on `Ubuntu 22` or `Ubuntu 24` with either `Wayland` or `X11` display servers.
 
 The script can be customized to execute or skip specific steps, use a custom installation directory, or include additional configuration options.
 
@@ -12,6 +12,7 @@ The script can be customized to execute or skip specific steps, use a custom ins
 >   - [Requirements](#requirements)
 >   - [Steps Performed by the Script](#steps-performed-by-the-script)
 >     - [Run All Steps in Non-Interactive Mode (Default)](#run-all-steps-in-non-interactive-mode-default)
+>     - [Dry-Run Mode](#dry-run-mode)
 >     - [Run All Steps in Interactive Mode](#run-all-steps-in-interactive-mode)
 >     - [Execute Specific Steps](#execute-specific-steps)
 >     - [Skip Certain Steps](#skip-certain-steps)
@@ -65,6 +66,24 @@ Or, if you've downloaded the script locally:
 > This mode assumes "yes" to all prompts and ensures a fully automated installation.
 
 ---
+
+### Dry-Run Mode
+
+When you run the script with the `-d` flag, it enters dry-run mode. In this mode, instead of actually executing commands, the script merely prints what it would do. This can be useful for verifying the installation process before making any changes to your system.
+
+For example:
+
+```bash
+./build-emacs.sh -d
+```
+
+In dry-run mode, you'll see messages like:
+
+```
+[INFO] Dry-run: sudo make install
+```
+
+This mode does not require elevated privileges and won't refresh your sudo credentials, as it only simulates the actions.
 
 ### Run All Steps in Interactive Mode
 
@@ -150,15 +169,15 @@ The script uses the following default build options:
 - `--with-tree-sitter`
 - `--with-mailutils`
 
-If `libwebkit2gtk-4.1` is installed and meets the required version, `--with-xwidgets` will also be added automatically.
+If `libwebkit2gtk-4.1` is installed and meets the required version, the `--with-xwidgets` option will be added automatically.
 
-You can append or override these with the `-c` flag. For instance:
+You can append to or override these options using the `-c` flag. For example:
 
 ```bash
-./build-emacs.sh -c --with-native-compilation=no,--without-pgtk
+./build-emacs.sh -c --with-native-compilation=no,--without-pgtk,--with-my-custom-option
 ```
 
-This example disables both native compilation and PGTK.
+In this example, native compilation and PGTK are disabled, and the additional option `--with-my-custom-option` is included.
 
 ---
 
