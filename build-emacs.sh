@@ -270,34 +270,56 @@ fix_emacs_xwidgets() {
 }
 
 install_deps() {
-  local pkgs=(build-essential autoconf make gcc libgnutls28-dev
-    libgccjit-11-dev libgccjit-12-dev libtiff5-dev libgif-dev libjpeg-dev
-    libpng-dev libxpm-dev libncurses-dev texinfo libgccjit0
-    libgccjit-10-dev gcc-10 g++-10 sqlite3
-    libconfig-dev libgtk-3-dev gnutls-bin libacl1-dev libotf-dev libxft-dev
-    libsystemd-dev libncurses5-dev libharfbuzz-dev imagemagick libmagickwand-dev
-    xaw3dg-dev libx11-dev libtree-sitter-dev automake bsd-mailx dbus-x11 debhelper
-    dpkg-dev libasound2-dev libdbus-1-dev libgpm-dev liblcms2-dev liblockfile-dev
-    libm17n-dev liboss4-salsa2 librsvg2-dev libselinux1-dev libtiff-dev libxml2-dev
-    libxt-dev procps quilt sharutils zlib1g-dev gvfs libasound2 libaspell15
+  local pkgs=(autoconf automake bsd-mailx build-essential clang dbus-x11
+    debhelper dpkg-dev g++-10 gawk gcc gcc-10 gnutls-bin gvfs heif-gdk-pixbuf
+    ibus-gtk3 imagemagick libacl1-dev libasound2 libasound2-dev libaspell15
     libasyncns0 libatk-bridge2.0-0 libatk1.0-0 libatspi2.0-0 libbrotli1 libc6
-    libc6-dev libcairo-gobject2 libcairo2 libcanberra-gtk3-0 libcanberra-gtk3-module
-    libcanberra0 libdatrie1 libdb5.3 libdrm2 libegl1 libepoxy0 libflac8
-    libfontconfig1 libfreetype6 libgbm1 libgcc-s1 libgdk-pixbuf2.0-0 libgif7 libgl1
-    libglvnd0 libglx0 libgpm2 libgraphite2-3 libgstreamer-gl1.0-0
-    libgstreamer-plugins-base1.0-0 libgstreamer1.0-0 libgtk-3-0 libgudev-1.0-0
-    libharfbuzz-icu0 libharfbuzz0b libhyphen0 libice6 libjbig0 libjpeg-turbo8
-    liblcms2-2 liblockfile1 libltdl7 libm17n-0 libmpc3 libmpfr6 libnotify4
-    libnss-mdns libnss-myhostname libnss-systemd libogg0 liborc-0.4-0 libpango-1.0-0
-    libpangocairo-1.0-0 libpangoft2-1.0-0 libpixman-1-0 libpng16-16 libpulse0
-    librsvg2-2 libsasl2-2 libsecret-1-0 libsm6 libsndfile1 libsoup2.4-1
-    libstdc++6 libtdb1 libthai0 libtiff5 libvorbis0a libvorbisenc2 libvorbisfile3
-    libwayland-client0 libwayland-cursor0 libwayland-egl1 libwayland-server0
-    libwebpdemux2 libwoff1 libx11-6 libx11-xcb1 libxau6 libxcb-render0 libxcb-shm0
-    libxcb1 heif-gdk-pixbuf libxcomposite1 libxcursor1 libxdamage1
-    gawk ibus-gtk3 libibus-1.0-5 libxdmcp6 libxext6
-    libxfixes3 libxi6 libxinerama1 libxkbcommon0 libxml2 libxpm4
-    libxrandr2 libxrender1 libxslt1.1 libyajl2 clang libclang-dev)
+    libc6-dev libcairo-gobject2 libcairo2 libcanberra-gtk3-0
+    libcanberra-gtk3-module libcanberra0 libclang-dev libconfig-dev libdatrie1
+    libdb5.3 libdbus-1-dev libdrm2 libegl1 libepoxy0 libflac8 libfontconfig1
+    libfreetype6 libgbm1 libgcc-s1 libgccjit-10-dev libgccjit-11-dev
+    libgccjit-12-dev libgccjit0 libgdk-pixbuf2.0-0 libgif-dev libgif7 libgl1
+    libglvnd0 libglx0 libgnutls28-dev libgpm-dev libgpm2 libgraphite2-3
+    libgstreamer-gl1.0-0 libgstreamer-plugins-base1.0-0 libgstreamer1.0-0
+    libgtk-3-0 libgtk-3-dev libgudev-1.0-0 libharfbuzz-dev libharfbuzz-icu0
+    libharfbuzz0b libhyphen0 libibus-1.0-5 libice6 libjbig0 libjpeg-dev
+    libjpeg-turbo8 liblcms2-2 liblcms2-dev liblockfile-dev liblockfile1 libltdl7
+    libm17n-0 libm17n-dev libmagickwand-dev libmpc3 libmpfr6 libncurses-dev
+    libncurses5-dev libnotify4 libnss-mdns libnss-myhostname libnss-systemd
+    libogg0 liborc-0.4-0 liboss4-salsa2 libotf-dev libpango-1.0-0
+    libpangocairo-1.0-0 libpangoft2-1.0-0 libpixman-1-0 libpng-dev libpng16-16
+    libpulse0 librsvg2-2 librsvg2-dev libsasl2-2 libsecret-1-0 libselinux1-dev
+    libsm6 libsndfile1 libsoup2.4-1 libstdc++6 libsystemd-dev libtdb1 libthai0
+    libtiff-dev libtiff5 libtiff5-dev libtree-sitter-dev libvorbis0a libvorbisenc2
+    libvorbisfile3 libwayland-client0 libwayland-cursor0 libwayland-egl1
+    libwayland-server0 libwebpdemux2 libwoff1 libx11-6 libx11-dev libx11-xcb1
+    libxau6 libxcb-render0 libxcb-shm0 libxcb1 libxcomposite1 libxcursor1
+    libxdamage1 libxdmcp6 libxext6 libxfixes3 libxft-dev libxi6 libxinerama1
+    libxkbcommon0 libxml2 libxml2-dev libxpm-dev libxpm4 libxrandr2 libxrender1
+    libxslt1.1 libxt-dev libyajl2 make procps quilt sharutils sqlite3 texinfo
+    xaw3dg-dev zlib1g-dev)
+
+  if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    ubuntu_major_version="${VERSION_ID%%.*}"
+  else
+    log_warn "Cannot detect Ubuntu version; proceeding with full dependency list."
+    ubuntu_major_version=22
+  fi
+
+  if [ "$ubuntu_major_version" -ge 24 ]; then
+    log_info "Detected Ubuntu $VERSION_ID: adjusting dependencies for Ubuntu 24"
+    local remove_pkgs=(libasound2 libflac8 libtiff5)
+    for pkg in "${remove_pkgs[@]}"; do
+      local new_pkgs=()
+      for installed in "${pkgs[@]}"; do
+        if [ "$installed" != "$pkg" ]; then
+          new_pkgs+=("$installed")
+        fi
+      done
+      pkgs=("${new_pkgs[@]}")
+    done
+  fi
 
   run_cmd sudo apt-get install --assume-yes "${pkgs[@]}"
 }
