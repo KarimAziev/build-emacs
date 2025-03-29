@@ -269,6 +269,31 @@ fix_emacs_xwidgets() {
   fi
 }
 
+detect_and_install_gccjit() {
+  gcc_version=$(/usr/bin/gcc -dumpversion | cut -d. -f1)
+  log_info "Detected GCC major version: $gcc_version"
+
+  if [ "$gcc_version" -ge 14 ]; then
+    log_info "Using libgccjit-14-dev for gcc version $gcc_version"
+    run_cmd sudo apt-get install --assume-yes libgccjit-14-dev
+  elif [ "$gcc_version" -ge 13 ]; then
+    log_info "Using libgccjit-13-dev for gcc version $gcc_version"
+    run_cmd sudo apt-get install --assume-yes libgccjit-13-dev
+  elif [ "$gcc_version" -ge 12 ]; then
+    log_info "Using libgccjit-12-dev for gcc version $gcc_version"
+    run_cmd sudo apt-get install --assume-yes libgccjit-12-dev
+  elif [ "$gcc_version" -ge 11 ]; then
+    log_info "Using libgccjit-11-dev for gcc version $gcc_version"
+    run_cmd sudo apt-get install --assume-yes libgccjit-11-dev
+  elif [ "$gcc_version" -ge 10 ]; then
+    log_info "Using libgccjit-10-dev for gcc version $gcc_version"
+    run_cmd sudo apt-get install --assume-yes libgccjit-10-dev
+  else
+    log_warn "GCC version ($gcc_version) is less than 10; native-compilation might not be supported."
+    run_cmd sudo apt-get install --assume-yes libgccjit-dev
+  fi
+}
+
 install_deps() {
   local pkgs=(autoconf automake bsd-mailx build-essential clang dbus-x11
     debhelper dpkg-dev g++-10 gawk gcc gcc-10 gnutls-bin gvfs heif-gdk-pixbuf
@@ -277,8 +302,7 @@ install_deps() {
     libc6-dev libcairo-gobject2 libcairo2 libcanberra-gtk3-0
     libcanberra-gtk3-module libcanberra0 libclang-dev libconfig-dev libdatrie1
     libdb5.3 libdbus-1-dev libdrm2 libegl1 libepoxy0 libflac8 libfontconfig1
-    libfreetype6 libgbm1 libgcc-s1 libgccjit-10-dev libgccjit-11-dev
-    libgccjit-12-dev libgccjit0 libgdk-pixbuf2.0-0 libgif-dev libgif7 libgl1
+    libfreetype6 libgbm1 libgcc-s1 libgccjit0 libgdk-pixbuf2.0-0 libgif-dev libgif7 libgl1
     libglvnd0 libglx0 libgnutls28-dev libgpm-dev libgpm2 libgraphite2-3
     libgstreamer-gl1.0-0 libgstreamer-plugins-base1.0-0 libgstreamer1.0-0
     libgtk-3-0 libgtk-3-dev libgudev-1.0-0 libharfbuzz-dev libharfbuzz-icu0
@@ -322,6 +346,8 @@ install_deps() {
   fi
 
   run_cmd sudo apt-get install --assume-yes "${pkgs[@]}"
+
+  detect_and_install_gccjit
 }
 
 kill_emacs() {
