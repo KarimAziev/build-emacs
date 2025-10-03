@@ -7,30 +7,53 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or tag to build'
+        required: true
+        default: 'main'
+  schedule:
+    - cron: '0 0 * * 0'   # weekly, Sundays at 00:00 UTC
 
 jobs:
   build-ubuntu-latest:
-    name: Build Emacs on Ubuntu Latest
     runs-on: ubuntu-latest
 
     steps:
+    - name: Decide whether to run (biweekly gate)
+      id: biweek
+      run: |
+        week=$(date -u +%V)
+        if [ $((10#$week % 2)) -eq 0 ]; then
+          echo "run=true" >> $GITHUB_OUTPUT
+        else
+          echo "run=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Checkout Repository
+      if: steps.biweek.outputs.run == 'true'
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        ref: ${{ github.event.inputs.ref }}
 
     - name: Setup Environment
+      if: steps.biweek.outputs.run == 'true'
       run: |
         sudo apt-get update
         sudo apt-get install -y wget git
 
     - name: Download build-emacs.sh
+      if: steps.biweek.outputs.run == 'true'
       run: |
         wget https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh
         chmod +x build-emacs.sh
 
     - name: Install Dependencies
+      if: steps.biweek.outputs.run == 'true'
       run: ./build-emacs.sh -s install_deps -y
 
     - name: Build Emacs
+      if: steps.biweek.outputs.run == 'true'
       run: ./build-emacs.sh -s kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon -y
