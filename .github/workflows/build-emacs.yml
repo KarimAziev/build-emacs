@@ -16,44 +16,47 @@ on:
   schedule:
     - cron: '0 0 * * 0'   # weekly, Sundays at 00:00 UTC
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-ubuntu-latest:
     runs-on: ubuntu-latest
+    timeout-minutes: 180
 
     steps:
-    - name: Decide whether to run (biweekly gate)
-      id: biweek
-      run: |
-        week=$(date -u +%V)
-        if [ $((10#$week % 2)) -eq 0 ]; then
-          echo "run=true" >> $GITHUB_OUTPUT
-        else
-          echo "run=false" >> $GITHUB_OUTPUT
-        fi
+      - name: Decide whether to run scheduled build (biweekly gate)
+        if: github.event_name == 'schedule'
+        id: biweek
+        run: |
+          week=$(date -u +%V)
+          if [ $((10#$week % 2)) -eq 0 ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
 
-    - name: Checkout Repository
-      if: steps.biweek.outputs.run == 'true'
-      uses: actions/checkout@v7
-      with:
-        fetch-depth: 0
-        ref: ${{ github.event.inputs.ref }}
+      - name: Checkout repository
+        if: github.event_name != 'schedule' || steps.biweek.outputs.run == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref || github.ref }}
 
-    - name: Setup Environment
-      if: steps.biweek.outputs.run == 'true'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y wget git
+      - name: Set up environment
+        if: github.event_name != 'schedule' || steps.biweek.outputs.run == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget git
 
-    - name: Download build-emacs.sh
-      if: steps.biweek.outputs.run == 'true'
-      run: |
-        wget https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh
-        chmod +x build-emacs.sh
+      - name: Install dependencies
+        if: github.event_name != 'schedule' || steps.biweek.outputs.run == 'true'
+        run: ./build-emacs.sh -s install_deps -y
 
-    - name: Install Dependencies
-      if: steps.biweek.outputs.run == 'true'
-      run: ./build-emacs.sh -s install_deps -y
-
-    - name: Build Emacs
-      if: steps.biweek.outputs.run == 'true'
-      run: ./build-emacs.sh -u https://github.com/emacs-mirror/emacs.git -s kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon -y
+      - name: Build Emacs
+        if: github.event_name != 'schedule' || steps.biweek.outputs.run == 'true'
+        run: ./build-emacs.sh -u https://github.com/emacs-mirror/emacs.git -s kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon -y
