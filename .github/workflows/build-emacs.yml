@@ -59,4 +59,4 @@ jobs:
 
       - name: Build Emacs
         if: github.event_name != 'schedule' || steps.biweek.outputs.run == 'true'
-        run: ./build-emacs.sh -u https://github.com/emacs-mirror/emacs.git -s kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon -y
+        run: ./build-emacs.sh -g -s kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon -y

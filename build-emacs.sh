@@ -34,7 +34,10 @@ run_cmd() {
 
 SKIP_PROMPT=${SKIP_PROMPT:-yes}
 EMACS_DIRECTORY="$HOME/emacs"
-EMACS_REMOTE_URL="https://git.savannah.gnu.org/git/emacs.git"
+DEFAULT_EMACS_REMOTE_URL="https://git.savannah.gnu.org/git/emacs.git"
+GITHUB_EMACS_REMOTE_URL="https://github.com/emacs-mirror/emacs.git"
+EMACS_REMOTE_URL="$DEFAULT_EMACS_REMOTE_URL"
+EMACS_REF=""
 CONFIGURE_OPTIONS=""
 
 WEBKIT_REQUIRED=2.12
@@ -94,7 +97,10 @@ usage() {
   echo "  -y              Run in non-interactive mode (default) and execute all steps without prompting."
   echo "  -p  DIRECTORY   Specify the Emacs installation directory. Default is '\$HOME/emacs'."
   echo "  -d              Run in dry-run mode: instead of executing commands, the script will print what it would do."
-  echo "  -u  URL         Specify the remote URL of the Emacs Git repository. Default is https://git.savannah.gnu.org/git/emacs.git."
+  echo "  -g              Use the GitHub Emacs mirror: https://github.com/emacs-mirror/emacs.git."
+  echo "  -u  URL         Specify the remote URL of the Emacs Git repository."
+  echo "                  Default is https://git.savannah.gnu.org/git/emacs.git."
+  echo "  -r  REF         Build a specific Git branch, tag, or commit."
   echo "  -s  STEPS       Specify the exact steps to execute. Steps should be separated by commas."
   echo "                  Available steps: install_deps, kill_emacs, remove_emacs, pull_emacs,"
   echo "                  build_emacs, install_emacs, fix_emacs_xwidgets, copy_emacs_icon."
@@ -112,9 +118,15 @@ usage() {
   echo "                                  Perform only the pull, build, and install steps in non-interactive mode."
   echo "  $0 -p \$HOME/myemacs -n install_deps,pull_emacs"
   echo "                                  Skip installing dependencies and pulling the Emacs source."
+  echo "  $0 -g -r emacs-30.1"
+  echo "                                  Build the emacs-30.1 tag from the GitHub mirror."
+  echo "  $0 -r feature/native-comp"
+  echo "                                  Build a branch from the default Savannah remote."
+  echo "  $0 -p \$HOME/src/emacs -s build_emacs,install_emacs"
+  echo "                                  Build and install the revision already checked out in an existing Emacs source directory."
   echo "  $0 -c --with-native-compilation=no,--without-pgtk"
   echo "                                  Specify additional configure options for building Emacs."
-  exit 0
+  exit "${1:-0}"
 }
 
 filter_steps() {
@@ -143,7 +155,7 @@ set_steps() {
 
 parse_arguments() {
   mode="default"
-  while getopts ":dhin:p:ys:u:c:" OPTION; do
+  while getopts ":dghin:p:r:ys:u:c:" OPTION; do
     case $OPTION in
       d)
         DRY_RUN=true
@@ -151,7 +163,9 @@ parse_arguments() {
 
       h)
         usage
-        exit 0
+        ;;
+      g)
+        EMACS_REMOTE_URL="$GITHUB_EMACS_REMOTE_URL"
         ;;
       i)
         if [ "$mode" = "non-interactive" ]; then
@@ -172,6 +186,9 @@ parse_arguments() {
       p)
         EMACS_DIRECTORY=$(readlink -f "$OPTARG")
         ;;
+      r)
+        EMACS_REF="$OPTARG"
+        ;;
       n)
         filter_steps "$OPTARG"
         ;;
@@ -184,10 +201,13 @@ parse_arguments() {
       c)
         CONFIGURE_OPTIONS="$OPTARG"
         ;;
-      ?)
+      \?)
         log_error "Illegal option: -$OPTARG"
-        usage
-        exit 1
+        usage 1
+        ;;
+      :)
+        log_error "Option -$OPTARG requires an argument."
+        usage 1
         ;;
     esac
   done
@@ -201,14 +221,14 @@ refresh_sudo() {
   done &
   SUDO_REFRESH_PID=$! # Capture PID of the background process
 
-  if ! kill -s 0 $SUDO_REFRESH_PID 2> /dev/null; then
+  if ! kill -s 0 "$SUDO_REFRESH_PID" 2> /dev/null; then
     log_error >&2 "Error: Failed to start refresh_sudo background process."
     exit 1
   fi
 }
 
 cleanup() {
-  kill $SUDO_REFRESH_PID 2> /dev/null
+  kill "$SUDO_REFRESH_PID" 2> /dev/null
 }
 
 main() {
@@ -323,16 +343,28 @@ install_deps() {
     libxslt1.1 libxt-dev libyajl2 make procps quilt sharutils sqlite3 texinfo
     xaw3dg-dev zlib1g-dev)
 
-  if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    ubuntu_major_version="${VERSION_ID%%.*}"
+  local os_release_file="/etc/os-release"
+  local ubuntu_version_id=""
+  local ubuntu_major_version
+
+  if [ -f "$os_release_file" ]; then
+    ubuntu_version_id=$(sed -n 's/^VERSION_ID=//p' "$os_release_file" | head -n 1)
+    ubuntu_version_id="${ubuntu_version_id#\"}"
+    ubuntu_version_id="${ubuntu_version_id%\"}"
+    ubuntu_version_id="${ubuntu_version_id#\'}"
+    ubuntu_version_id="${ubuntu_version_id%\'}"
+  fi
+
+  if [ -n "$ubuntu_version_id" ]; then
+    ubuntu_major_version="${ubuntu_version_id%%.*}"
   else
     log_warn "Cannot detect Ubuntu version; proceeding with full dependency list."
+    ubuntu_version_id=22
     ubuntu_major_version=22
   fi
 
   if [ "$ubuntu_major_version" -ge 24 ]; then
-    log_info "Detected Ubuntu $VERSION_ID: adjusting dependencies for Ubuntu 24"
+    log_info "Detected Ubuntu $ubuntu_version_id: adjusting dependencies for Ubuntu 24"
     local remove_pkgs=(libasound2 libflac8 libtiff5)
     for pkg in "${remove_pkgs[@]}"; do
       local new_pkgs=()
@@ -360,6 +392,9 @@ kill_emacs() {
 }
 
 pull_emacs() {
+  local is_new_clone=false
+  local current_branch=""
+
   if [ ! -d "$EMACS_DIRECTORY" ]; then
     log_info "Cloning emacs"
 
@@ -372,6 +407,8 @@ pull_emacs() {
       log_error >&2 "Error: The Emacs directory '$EMACS_DIRECTORY' does not exist."
       exit 1
     }
+
+    is_new_clone=true
 
   else
     cd "$EMACS_DIRECTORY" || {
@@ -387,8 +424,28 @@ pull_emacs() {
 
     fi
 
-    log_info "Pulling Emacs"
-    run_cmd git pull origin "$(git rev-parse --abbrev-ref HEAD)"
+  fi
+
+  if [ -n "$EMACS_REF" ]; then
+    log_info "Fetching Emacs ref $EMACS_REF"
+    if ! run_cmd git fetch --depth 1 origin "$EMACS_REF"; then
+      log_error "Error: Failed to fetch Emacs ref '$EMACS_REF'. Check that the branch, tag, or commit exists."
+      exit 1
+    fi
+
+    log_info "Checking out Emacs ref $EMACS_REF"
+    run_cmd git checkout --detach FETCH_HEAD
+  elif [ "$is_new_clone" = false ]; then
+    current_branch=$(git symbolic-ref --quiet --short HEAD || true)
+
+    if [ -n "$current_branch" ]; then
+      log_info "Pulling Emacs branch $current_branch"
+      run_cmd git pull --ff-only origin "$current_branch"
+    else
+      log_info "Updating Emacs from the remote's default branch"
+      run_cmd git fetch --depth 1 origin HEAD
+      run_cmd git checkout --detach FETCH_HEAD
+    fi
   fi
 }
 

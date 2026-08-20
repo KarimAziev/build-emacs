@@ -17,6 +17,7 @@ The script can be customized to execute or skip specific steps, use a custom ins
 >     - [Execute Specific Steps](#execute-specific-steps)
 >     - [Skip Certain Steps](#skip-certain-steps)
 >     - [Use a Custom Installation Directory](#use-a-custom-installation-directory)
+>     - [Choose an Emacs Source](#choose-an-emacs-source)
 >     - [Add or Override Configuration Options](#add-or-override-configuration-options)
 >     - [Display Help](#display-help)
 >   - [List of packages that will be installed](#list-of-packages-that-will-be-installed)
@@ -156,6 +157,49 @@ Or, if you've downloaded the script locally:
 ```
 
 The default directory is `$HOME/emacs`.
+
+To build and install the revision already checked out in an existing Emacs source directory, specify that directory and execute only the build and install steps:
+
+```bash
+./build-emacs.sh -p "$HOME/src/emacs" -s build_emacs,install_emacs
+```
+
+This leaves the existing repository's remote, branch, tag, commit, and working tree selection untouched. If you want to run every default step except fetching or pulling the source, use:
+
+```bash
+./build-emacs.sh -p "$HOME/src/emacs" -n pull_emacs
+```
+
+The second form still runs `remove_emacs`, including `make uninstall` and `make extraclean`, before rebuilding. Use the explicit `-s build_emacs,install_emacs` form when you do not want those cleanup operations.
+
+---
+
+### Choose an Emacs Source
+
+By default, the script builds the latest revision from the Emacs repository on Savannah. Use `-r` to build a specific branch, tag, or commit:
+
+```bash
+./build-emacs.sh -r emacs-30.1
+./build-emacs.sh -r feature/native-comp
+./build-emacs.sh -r 0123456789abcdef0123456789abcdef01234567
+```
+
+The requested revision is fetched explicitly and checked out in detached-HEAD mode. When `-r` names a branch, rerunning the script fetches and builds the branch's current tip.
+
+Savannah can occasionally be slow or unavailable. Use `-g` to select the [GitHub Emacs mirror](https://github.com/emacs-mirror/emacs):
+
+```bash
+./build-emacs.sh -g
+./build-emacs.sh -g -r emacs-30.1
+```
+
+For another mirror or fork, pass its clone URL with `-u`:
+
+```bash
+./build-emacs.sh -u https://example.com/user/emacs.git -r my-branch
+```
+
+If more than one remote-selection option is supplied, the last `-g` or `-u` option takes precedence. The selected URL is also applied to an existing clone's `origin` remote.
 
 ---
 
