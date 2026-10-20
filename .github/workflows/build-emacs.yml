@@ -24,6 +24,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Scheduled runs do not reset GitHub's repository inactivity timer.
+  workflow-keepalive:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Keep scheduled workflow enabled
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh api --method PUT "repos/${GH_REPO}/actions/workflows/build-emacs.yml/enable"
+
   build-ubuntu-latest:
     runs-on: ubuntu-latest
     timeout-minutes: 180
